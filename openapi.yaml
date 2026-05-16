@@ -34,6 +34,8 @@ tags:
     description: Manage SSH public keys distributed to your VMs.
   - name: Quotas
     description: Read your organization's resource limits and current usage.
+  - name: Snapshots
+    description: List, restore, and delete VM disk snapshots stored at the cloud provider.
 components:
   securitySchemes:
     bearerAuth:
@@ -52,6 +54,1300 @@ security:
   - bearerAuth: []
   - sessionCookie: []
 paths:
+  /orgs/{orgSlug}/projects/{projectSlug}/snapshots:
+    get:
+      operationId: listSnapshots
+      summary: List snapshots
+      description: >-
+        List every snapshot belonging to the current project. Each row is
+        enriched with `isOrphan` (the source instance has been deleted) and
+        `displaySubdomain` (falls back to a short id derived from the source
+        instance when no subdomain was ever assigned). The `quota` object
+        reports how many snapshot slots are used vs. the platform default.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Snapshot list + quota
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      snapshots:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            instanceId:
+                              type:
+                                - string
+                                - 'null'
+                            originalInstanceId:
+                              type: string
+                            userId:
+                              type:
+                                - string
+                                - 'null'
+                            instanceSubdomain:
+                              type:
+                                - string
+                                - 'null'
+                            version:
+                              type:
+                                - string
+                                - 'null'
+                            sizeBytes:
+                              type: number
+                            s3Key:
+                              type:
+                                - string
+                                - 'null'
+                            sha256:
+                              type:
+                                - string
+                                - 'null'
+                            providerSnapshotId:
+                              type:
+                                - number
+                                - 'null'
+                            status:
+                              type: string
+                              enum:
+                                - ready
+                                - uploading
+                                - error
+                            type:
+                              type: string
+                              enum:
+                                - manual
+                                - migration
+                                - termination
+                            progress:
+                              type: number
+                            errorMessage:
+                              type:
+                                - string
+                                - 'null'
+                            projectId:
+                              type: string
+                            createdAt:
+                              type: string
+                            retentionExpiresAt:
+                              type:
+                                - string
+                                - 'null'
+                            isOrphan:
+                              type: boolean
+                            displaySubdomain:
+                              type: string
+                          required:
+                            - id
+                            - instanceId
+                            - originalInstanceId
+                            - userId
+                            - instanceSubdomain
+                            - version
+                            - sizeBytes
+                            - s3Key
+                            - sha256
+                            - providerSnapshotId
+                            - status
+                            - type
+                            - progress
+                            - errorMessage
+                            - projectId
+                            - createdAt
+                            - retentionExpiresAt
+                            - isOrphan
+                            - displaySubdomain
+                      quota:
+                        type: object
+                        properties:
+                          used:
+                            type: number
+                          total:
+                            type: number
+                        required:
+                          - used
+                          - total
+                    required:
+                      - snapshots
+                      - quota
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/snapshots/for-restore:
+    get:
+      operationId: listRestorableSnapshots
+      summary: List restorable snapshots
+      description: >-
+        Return every `ready` snapshot in the current project, grouped by the
+        source instance, for the new-instance restore selector. Each snapshot is
+        best-effort enriched with `sourceDiskGb` so the UI can prevent picking a
+        server type smaller than the snapshot needs; if the cloud provider
+        lookup fails the field is `null` and the backend validates the restore
+        separately.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Restorable snapshots grouped by source instance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      groups:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            instanceId:
+                              type: string
+                            subdomain:
+                              type: string
+                            snapshots:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  instanceId:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  originalInstanceId:
+                                    type: string
+                                  userId:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  instanceSubdomain:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  version:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sizeBytes:
+                                    type: number
+                                  s3Key:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sha256:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  providerSnapshotId:
+                                    type:
+                                      - number
+                                      - 'null'
+                                  status:
+                                    type: string
+                                    enum:
+                                      - ready
+                                      - uploading
+                                      - error
+                                  type:
+                                    type: string
+                                    enum:
+                                      - manual
+                                      - migration
+                                      - termination
+                                  progress:
+                                    type: number
+                                  errorMessage:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  projectId:
+                                    type: string
+                                  createdAt:
+                                    type: string
+                                  retentionExpiresAt:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sourceDiskGb:
+                                    type:
+                                      - number
+                                      - 'null'
+                                required:
+                                  - id
+                                  - instanceId
+                                  - originalInstanceId
+                                  - userId
+                                  - instanceSubdomain
+                                  - version
+                                  - sizeBytes
+                                  - s3Key
+                                  - sha256
+                                  - providerSnapshotId
+                                  - status
+                                  - type
+                                  - progress
+                                  - errorMessage
+                                  - projectId
+                                  - createdAt
+                                  - retentionExpiresAt
+                                  - sourceDiskGb
+                          required:
+                            - instanceId
+                            - subdomain
+                            - snapshots
+                    required:
+                      - groups
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/snapshots/{snapshotId}:
+    delete:
+      operationId: deleteSnapshot
+      summary: Delete a snapshot
+      description: >-
+        Permanently delete a snapshot. Works for both attached and orphan
+        (source-instance-deleted) snapshots. The S3 object and the provider
+        snapshot are removed best-effort — the database row is always cleared
+        regardless. Rejects with `SNAPSHOT_IN_PROGRESS` while the snapshot is
+        still uploading.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Snapshot deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                    required:
+                      - id
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope or permission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: Snapshot not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: Snapshot is still uploading
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: snapshotId
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots:
+    get:
+      operationId: listSnapshots
+      summary: List snapshots
+      description: >-
+        List every snapshot belonging to the current project. Each row is
+        enriched with `isOrphan` (the source instance has been deleted) and
+        `displaySubdomain` (falls back to a short id derived from the source
+        instance when no subdomain was ever assigned). The `quota` object
+        reports how many snapshot slots are used vs. the platform default.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Snapshot list + quota
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      snapshots:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            instanceId:
+                              type:
+                                - string
+                                - 'null'
+                            originalInstanceId:
+                              type: string
+                            userId:
+                              type:
+                                - string
+                                - 'null'
+                            instanceSubdomain:
+                              type:
+                                - string
+                                - 'null'
+                            version:
+                              type:
+                                - string
+                                - 'null'
+                            sizeBytes:
+                              type: number
+                            s3Key:
+                              type:
+                                - string
+                                - 'null'
+                            sha256:
+                              type:
+                                - string
+                                - 'null'
+                            providerSnapshotId:
+                              type:
+                                - number
+                                - 'null'
+                            status:
+                              type: string
+                              enum:
+                                - ready
+                                - uploading
+                                - error
+                            type:
+                              type: string
+                              enum:
+                                - manual
+                                - migration
+                                - termination
+                            progress:
+                              type: number
+                            errorMessage:
+                              type:
+                                - string
+                                - 'null'
+                            projectId:
+                              type: string
+                            createdAt:
+                              type: string
+                            retentionExpiresAt:
+                              type:
+                                - string
+                                - 'null'
+                            isOrphan:
+                              type: boolean
+                            displaySubdomain:
+                              type: string
+                          required:
+                            - id
+                            - instanceId
+                            - originalInstanceId
+                            - userId
+                            - instanceSubdomain
+                            - version
+                            - sizeBytes
+                            - s3Key
+                            - sha256
+                            - providerSnapshotId
+                            - status
+                            - type
+                            - progress
+                            - errorMessage
+                            - projectId
+                            - createdAt
+                            - retentionExpiresAt
+                            - isOrphan
+                            - displaySubdomain
+                      quota:
+                        type: object
+                        properties:
+                          used:
+                            type: number
+                          total:
+                            type: number
+                        required:
+                          - used
+                          - total
+                    required:
+                      - snapshots
+                      - quota
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots/for-restore:
+    get:
+      operationId: listRestorableSnapshots
+      summary: List restorable snapshots
+      description: >-
+        Return every `ready` snapshot in the current project, grouped by the
+        source instance, for the new-instance restore selector. Each snapshot is
+        best-effort enriched with `sourceDiskGb` so the UI can prevent picking a
+        server type smaller than the snapshot needs; if the cloud provider
+        lookup fails the field is `null` and the backend validates the restore
+        separately.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Restorable snapshots grouped by source instance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      groups:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            instanceId:
+                              type: string
+                            subdomain:
+                              type: string
+                            snapshots:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  instanceId:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  originalInstanceId:
+                                    type: string
+                                  userId:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  instanceSubdomain:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  version:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sizeBytes:
+                                    type: number
+                                  s3Key:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sha256:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  providerSnapshotId:
+                                    type:
+                                      - number
+                                      - 'null'
+                                  status:
+                                    type: string
+                                    enum:
+                                      - ready
+                                      - uploading
+                                      - error
+                                  type:
+                                    type: string
+                                    enum:
+                                      - manual
+                                      - migration
+                                      - termination
+                                  progress:
+                                    type: number
+                                  errorMessage:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  projectId:
+                                    type: string
+                                  createdAt:
+                                    type: string
+                                  retentionExpiresAt:
+                                    type:
+                                      - string
+                                      - 'null'
+                                  sourceDiskGb:
+                                    type:
+                                      - number
+                                      - 'null'
+                                required:
+                                  - id
+                                  - instanceId
+                                  - originalInstanceId
+                                  - userId
+                                  - instanceSubdomain
+                                  - version
+                                  - sizeBytes
+                                  - s3Key
+                                  - sha256
+                                  - providerSnapshotId
+                                  - status
+                                  - type
+                                  - progress
+                                  - errorMessage
+                                  - projectId
+                                  - createdAt
+                                  - retentionExpiresAt
+                                  - sourceDiskGb
+                          required:
+                            - instanceId
+                            - subdomain
+                            - snapshots
+                    required:
+                      - groups
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots/{snapshotId}:
+    delete:
+      operationId: deleteSnapshot
+      summary: Delete a snapshot
+      description: >-
+        Permanently delete a snapshot. Works for both attached and orphan
+        (source-instance-deleted) snapshots. The S3 object and the provider
+        snapshot are removed best-effort — the database row is always cleared
+        regardless. Rejects with `SNAPSHOT_IN_PROGRESS` while the snapshot is
+        still uploading.
+      tags:
+        - Snapshots
+      responses:
+        '200':
+          description: Snapshot deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                    required:
+                      - id
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope or permission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: Snapshot not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: Snapshot is still uploading
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: snapshotId
+          required: true
   /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys:
     get:
       operationId: listSshKeys

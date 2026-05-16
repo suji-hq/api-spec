@@ -1,3 +1,38 @@
+## 2026-05-16 — commit f87c732
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /orgs/{orgSlug}/projects/{projectSlug}/snapshots
+-  endpoint added
+
+
+### GET /orgs/{orgSlug}/projects/{projectSlug}/snapshots/for-restore
+-  endpoint added
+
+
+### DELETE /orgs/{orgSlug}/projects/{projectSlug}/snapshots/{snapshotId}
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots/for-restore
+-  endpoint added
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots/{snapshotId}
+-  endpoint added
+
+
+
+
+
+
+
 ## 2026-05-16 — commit aeeb270
 # API Changelog 1.0.0 vs. 1.0.0
 
