@@ -1,10 +1,29 @@
 openapi: 3.1.0
 info:
   title: Suji API
+  description: >-
+    Customer-facing REST API for the Suji platform. When both an Authorization
+    Bearer token and a session cookie are present, the Bearer token takes
+    precedence and the session cookie is ignored.
   version: 1.0.0
-  description: |
-    Stub — populated by CI from the source-of-truth repo on every push to main.
 servers:
   - url: https://api.suji.fr
     description: Production
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: suji_pat_*
+      description: >-
+        Personal access token. Scope is `read` (GET only) or `read-write`
+        (full).
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: suji_session
+      description: Browser session cookie. Cannot be used from non-browser clients.
+security:
+  - bearerAuth: []
+  - sessionCookie: []
 paths: {}
