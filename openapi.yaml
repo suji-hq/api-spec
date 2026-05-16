@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info:
+  title: Suji API
+  version: 1.0.0
+  description: |
+    Stub — populated by CI from the source-of-truth repo on every push to main.
+servers:
+  - url: https://api.suji.fr
+    description: Production
+paths: {}
