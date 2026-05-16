@@ -26,4 +26,1280 @@ components:
 security:
   - bearerAuth: []
   - sessionCookie: []
-paths: {}
+paths:
+  /orgs/{orgSlug}/projects/{projectSlug}/api-tokens:
+    get:
+      operationId: getOrgsByOrgSlugProjectsByProjectSlugApiTokens
+      description: >-
+        List API tokens for the current project. Revoked tokens are kept visible
+        for 30 days.
+      tags:
+        - API tokens
+      responses:
+        '200':
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        userId:
+                          type:
+                            - string
+                            - 'null'
+                        name:
+                          type: string
+                        tokenPrefix:
+                          type: string
+                        scope:
+                          type: string
+                          enum:
+                            - read
+                            - read-write
+                        expiresAt:
+                          type:
+                            - string
+                            - 'null'
+                        lastUsedAt:
+                          type:
+                            - string
+                            - 'null'
+                        revokedAt:
+                          type:
+                            - string
+                            - 'null'
+                        createdAt:
+                          type: string
+                      required:
+                        - id
+                        - userId
+                        - name
+                        - tokenPrefix
+                        - scope
+                        - expiresAt
+                        - lastUsedAt
+                        - revokedAt
+                        - createdAt
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+    post:
+      operationId: postOrgsByOrgSlugProjectsByProjectSlugApiTokens
+      description: >-
+        Create a new API token. Session-only (requires sudo). The plaintext
+        token is returned ONCE in the response — store it immediately.
+      tags:
+        - API tokens
+      security:
+        - sessionCookie: []
+      responses:
+        '201':
+          description: Created — plaintext token returned once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      token:
+                        type: string
+                      tokenPrefix:
+                        type: string
+                      name:
+                        type: string
+                      scope:
+                        type: string
+                        enum:
+                          - read
+                          - read-write
+                      expiresAt:
+                        type:
+                          - string
+                          - 'null'
+                    required:
+                      - id
+                      - token
+                      - tokenPrefix
+                      - name
+                      - scope
+                      - expiresAt
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Session required (sudo)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (5/hour/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}:
+    delete:
+      operationId: deleteOrgsByOrgSlugProjectsByProjectSlugApiTokensById
+      description: >-
+        Revoke an API token. Idempotent — returns success even if already
+        revoked. Permission: creator OR project owner OR org admin/owner.
+      tags:
+        - API tokens
+      responses:
+        '200':
+          description: Revoked (or already was)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                    required:
+                      - id
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient permission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens:
+    get:
+      operationId: getV1OrgsByOrgSlugProjectsByProjectSlugApiTokens
+      description: >-
+        List API tokens for the current project. Revoked tokens are kept visible
+        for 30 days.
+      tags:
+        - API tokens
+      responses:
+        '200':
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        userId:
+                          type:
+                            - string
+                            - 'null'
+                        name:
+                          type: string
+                        tokenPrefix:
+                          type: string
+                        scope:
+                          type: string
+                          enum:
+                            - read
+                            - read-write
+                        expiresAt:
+                          type:
+                            - string
+                            - 'null'
+                        lastUsedAt:
+                          type:
+                            - string
+                            - 'null'
+                        revokedAt:
+                          type:
+                            - string
+                            - 'null'
+                        createdAt:
+                          type: string
+                      required:
+                        - id
+                        - userId
+                        - name
+                        - tokenPrefix
+                        - scope
+                        - expiresAt
+                        - lastUsedAt
+                        - revokedAt
+                        - createdAt
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+    post:
+      operationId: postV1OrgsByOrgSlugProjectsByProjectSlugApiTokens
+      description: >-
+        Create a new API token. Session-only (requires sudo). The plaintext
+        token is returned ONCE in the response — store it immediately.
+      tags:
+        - API tokens
+      security:
+        - sessionCookie: []
+      responses:
+        '201':
+          description: Created — plaintext token returned once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      token:
+                        type: string
+                      tokenPrefix:
+                        type: string
+                      name:
+                        type: string
+                      scope:
+                        type: string
+                        enum:
+                          - read
+                          - read-write
+                      expiresAt:
+                        type:
+                          - string
+                          - 'null'
+                    required:
+                      - id
+                      - token
+                      - tokenPrefix
+                      - name
+                      - scope
+                      - expiresAt
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Session required (sudo)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (5/hour/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}:
+    delete:
+      operationId: deleteV1OrgsByOrgSlugProjectsByProjectSlugApiTokensById
+      description: >-
+        Revoke an API token. Idempotent — returns success even if already
+        revoked. Permission: creator OR project owner OR org admin/owner.
+      tags:
+        - API tokens
+      responses:
+        '200':
+          description: Revoked (or already was)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                    required:
+                      - id
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient permission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true

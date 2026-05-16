@@ -1,3 +1,38 @@
+## 2026-05-16 — commit 358aee1
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  endpoint added
+
+
+### POST /orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  endpoint added
+
+
+### DELETE /orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  endpoint added
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}
+-  endpoint added
+
+
+
+
+
+
+
 ## 2026-05-16 — commit b9cdc81
 # API Changelog 1.0.0 vs. 1.0.0
 
