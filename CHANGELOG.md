@@ -1,3 +1,92 @@
+## 2026-05-16 — commit aeeb270
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  api operation id `getOrgsByOrgSlugProjectsByProjectSlugApiTokens` removed and replaced with `listApiTokens`
+-  added the optional property `result_info` to the response with the `200` status
+
+
+### POST /orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  api operation id `postOrgsByOrgSlugProjectsByProjectSlugApiTokens` removed and replaced with `createApiToken`
+-  added the optional property `result_info` to the response with the `201` status
+
+
+### DELETE /orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}
+-  api operation id `deleteOrgsByOrgSlugProjectsByProjectSlugApiTokensById` removed and replaced with `revokeApiToken`
+-  added the optional property `result_info` to the response with the `200` status
+
+
+### GET /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys
+-  endpoint added
+
+
+### POST /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys
+-  endpoint added
+
+
+### POST /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/sync
+-  endpoint added
+
+
+### DELETE /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}
+-  endpoint added
+
+
+### PATCH /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}
+-  endpoint added
+
+
+### GET /orgs/{orgSlug}/quotas
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  api operation id `getV1OrgsByOrgSlugProjectsByProjectSlugApiTokens` removed and replaced with `listApiTokens`
+-  added the optional property `result_info` to the response with the `200` status
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens
+-  api operation id `postV1OrgsByOrgSlugProjectsByProjectSlugApiTokens` removed and replaced with `createApiToken`
+-  added the optional property `result_info` to the response with the `201` status
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}
+-  api operation id `deleteV1OrgsByOrgSlugProjectsByProjectSlugApiTokensById` removed and replaced with `revokeApiToken`
+-  added the optional property `result_info` to the response with the `200` status
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/sync
+-  endpoint added
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}
+-  endpoint added
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/quotas
+-  endpoint added
+
+
+
+
+
+
+
 ## 2026-05-16 — commit 358aee1
 # API Changelog 1.0.0 vs. 1.0.0
 

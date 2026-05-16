@@ -2,13 +2,38 @@ openapi: 3.1.0
 info:
   title: Suji API
   description: >-
-    Customer-facing REST API for the Suji platform. When both an Authorization
-    Bearer token and a session cookie are present, the Bearer token takes
-    precedence and the session cookie is ignored.
+    Customer-facing REST API for the Suji platform.
+
+
+    **Authentication.** When both an Authorization Bearer token and a session
+    cookie are present, the Bearer token takes precedence and the session cookie
+    is ignored.
+
+
+    **Envelope.** Every JSON response is wrapped in a Cloudflare-style envelope:
+    `{ success, result, errors: [], messages: [] }`. List responses additionally
+    include `result_info` with pagination metadata.
+
+
+    **Versioning.** This is `/v1`. Breaking changes will land at `/v2` with v1
+    kept alive until customer telemetry shows < 5% of calls.
   version: 1.0.0
+  contact:
+    name: Suji Support
+    email: support@suji.fr
+    url: https://suji.fr
+  license:
+    name: Proprietary — see suji.fr/terms
 servers:
   - url: https://api.suji.fr
     description: Production
+tags:
+  - name: API tokens
+    description: Issue and revoke personal access tokens for programmatic access.
+  - name: SSH keys
+    description: Manage SSH public keys distributed to your VMs.
+  - name: Quotas
+    description: Read your organization's resource limits and current usage.
 components:
   securitySchemes:
     bearerAuth:
@@ -27,17 +52,16 @@ security:
   - bearerAuth: []
   - sessionCookie: []
 paths:
-  /orgs/{orgSlug}/projects/{projectSlug}/api-tokens:
+  /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys:
     get:
-      operationId: getOrgsByOrgSlugProjectsByProjectSlugApiTokens
-      description: >-
-        List API tokens for the current project. Revoked tokens are kept visible
-        for 30 days.
+      operationId: listSshKeys
+      summary: List SSH keys
+      description: List SSH keys for the current project.
       tags:
-        - API tokens
+        - SSH keys
       responses:
         '200':
-          description: Token list
+          description: SSH key list
           content:
             application/json:
               schema:
@@ -57,39 +81,46 @@ paths:
                           type:
                             - string
                             - 'null'
+                        projectId:
+                          type: string
                         name:
                           type: string
-                        tokenPrefix:
+                        publicKey:
                           type: string
-                        scope:
+                        fingerprint:
                           type: string
-                          enum:
-                            - read
-                            - read-write
-                        expiresAt:
-                          type:
-                            - string
-                            - 'null'
-                        lastUsedAt:
-                          type:
-                            - string
-                            - 'null'
-                        revokedAt:
-                          type:
-                            - string
-                            - 'null'
+                        applyToAll:
+                          type: boolean
                         createdAt:
                           type: string
                       required:
                         - id
                         - userId
+                        - projectId
                         - name
-                        - tokenPrefix
-                        - scope
-                        - expiresAt
-                        - lastUsedAt
-                        - revokedAt
+                        - publicKey
+                        - fingerprint
+                        - applyToAll
                         - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -190,7 +221,2612 @@ paths:
           name: projectSlug
           required: true
     post:
-      operationId: postOrgsByOrgSlugProjectsByProjectSlugApiTokens
+      operationId: createSshKey
+      summary: Add an SSH key
+      description: >-
+        Add an SSH public key to the current project. Keys with `applyToAll`
+        (default true) are pushed to every running VM in the project and applied
+        to every new VM at boot.
+      tags:
+        - SSH keys
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      fingerprint:
+                        type: string
+                      createdAt:
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - fingerprint
+                      - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request or invalid key format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: A key with this fingerprint already exists in the project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}:
+    delete:
+      operationId: deleteSshKey
+      summary: Delete an SSH key
+      description: >-
+        Delete an SSH key. The key is also removed from all instances via FK
+        cascade, and the updated set is pushed to running instances so the
+        revoke takes effect without a reboot.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        const: true
+                    required:
+                      - success
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: SSH key not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+    patch:
+      operationId: updateSshKey
+      summary: Update an SSH key
+      description: >-
+        Update an SSH key — rename it or toggle whether it applies to all
+        project instances.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Updated SSH key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      userId:
+                        type:
+                          - string
+                          - 'null'
+                      projectId:
+                        type: string
+                      name:
+                        type: string
+                      publicKey:
+                        type: string
+                      fingerprint:
+                        type: string
+                      applyToAll:
+                        type: boolean
+                      createdAt:
+                        type: string
+                    required:
+                      - id
+                      - userId
+                      - projectId
+                      - name
+                      - publicKey
+                      - fingerprint
+                      - applyToAll
+                      - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: SSH key not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/sync:
+    post:
+      operationId: syncSshKeys
+      summary: Re-push keys to all instances
+      description: >-
+        Manually re-push the current set of `applyToAll` SSH keys to every
+        running instance in the project. Useful if a previous live propagation
+        failed.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      applied:
+                        type: number
+                      failed:
+                        type: number
+                    required:
+                      - applied
+                      - failed
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys:
+    get:
+      operationId: listSshKeys
+      summary: List SSH keys
+      description: List SSH keys for the current project.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: SSH key list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        userId:
+                          type:
+                            - string
+                            - 'null'
+                        projectId:
+                          type: string
+                        name:
+                          type: string
+                        publicKey:
+                          type: string
+                        fingerprint:
+                          type: string
+                        applyToAll:
+                          type: boolean
+                        createdAt:
+                          type: string
+                      required:
+                        - id
+                        - userId
+                        - projectId
+                        - name
+                        - publicKey
+                        - fingerprint
+                        - applyToAll
+                        - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+    post:
+      operationId: createSshKey
+      summary: Add an SSH key
+      description: >-
+        Add an SSH public key to the current project. Keys with `applyToAll`
+        (default true) are pushed to every running VM in the project and applied
+        to every new VM at boot.
+      tags:
+        - SSH keys
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      fingerprint:
+                        type: string
+                      createdAt:
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - fingerprint
+                      - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request or invalid key format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: A key with this fingerprint already exists in the project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/{id}:
+    delete:
+      operationId: deleteSshKey
+      summary: Delete an SSH key
+      description: >-
+        Delete an SSH key. The key is also removed from all instances via FK
+        cascade, and the updated set is pushed to running instances so the
+        revoke takes effect without a reboot.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        const: true
+                    required:
+                      - success
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: SSH key not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+    patch:
+      operationId: updateSshKey
+      summary: Update an SSH key
+      description: >-
+        Update an SSH key — rename it or toggle whether it applies to all
+        project instances.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Updated SSH key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      userId:
+                        type:
+                          - string
+                          - 'null'
+                      projectId:
+                        type: string
+                      name:
+                        type: string
+                      publicKey:
+                        type: string
+                      fingerprint:
+                        type: string
+                      applyToAll:
+                        type: boolean
+                      createdAt:
+                        type: string
+                    required:
+                      - id
+                      - userId
+                      - projectId
+                      - name
+                      - publicKey
+                      - fingerprint
+                      - applyToAll
+                      - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '404':
+          description: SSH key not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys/sync:
+    post:
+      operationId: syncSshKeys
+      summary: Re-push keys to all instances
+      description: >-
+        Manually re-push the current set of `applyToAll` SSH keys to every
+        running instance in the project. Useful if a previous live propagation
+        failed.
+      tags:
+        - SSH keys
+      responses:
+        '200':
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      applied:
+                        type: number
+                      failed:
+                        type: number
+                    required:
+                      - applied
+                      - failed
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Insufficient scope
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (10 mutations/minute/user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+  /orgs/{orgSlug}/projects/{projectSlug}/api-tokens:
+    get:
+      operationId: listApiTokens
+      summary: List API tokens
+      description: >-
+        List API tokens for the current project. Revoked tokens are kept visible
+        for 30 days.
+      tags:
+        - API tokens
+      responses:
+        '200':
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        userId:
+                          type:
+                            - string
+                            - 'null'
+                        name:
+                          type: string
+                        tokenPrefix:
+                          type: string
+                        scope:
+                          type: string
+                          enum:
+                            - read
+                            - read-write
+                        expiresAt:
+                          type:
+                            - string
+                            - 'null'
+                        lastUsedAt:
+                          type:
+                            - string
+                            - 'null'
+                        revokedAt:
+                          type:
+                            - string
+                            - 'null'
+                        createdAt:
+                          type: string
+                      required:
+                        - id
+                        - userId
+                        - name
+                        - tokenPrefix
+                        - scope
+                        - expiresAt
+                        - lastUsedAt
+                        - revokedAt
+                        - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project selected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+    post:
+      operationId: createApiToken
+      summary: Create an API token
       description: >-
         Create a new API token. Session-only (requires sudo). The plaintext
         token is returned ONCE in the response — store it immediately.
@@ -236,6 +2872,25 @@ paths:
                       - name
                       - scope
                       - expiresAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -437,7 +3092,8 @@ paths:
           required: true
   /orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}:
     delete:
-      operationId: deleteOrgsByOrgSlugProjectsByProjectSlugApiTokensById
+      operationId: revokeApiToken
+      summary: Revoke an API token
       description: >-
         Revoke an API token. Idempotent — returns success even if already
         revoked. Permission: creator OR project owner OR org admin/owner.
@@ -461,6 +3117,25 @@ paths:
                         type: string
                     required:
                       - id
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -667,7 +3342,8 @@ paths:
           required: true
   /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens:
     get:
-      operationId: getV1OrgsByOrgSlugProjectsByProjectSlugApiTokens
+      operationId: listApiTokens
+      summary: List API tokens
       description: >-
         List API tokens for the current project. Revoked tokens are kept visible
         for 30 days.
@@ -728,6 +3404,25 @@ paths:
                         - lastUsedAt
                         - revokedAt
                         - createdAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -828,7 +3523,8 @@ paths:
           name: projectSlug
           required: true
     post:
-      operationId: postV1OrgsByOrgSlugProjectsByProjectSlugApiTokens
+      operationId: createApiToken
+      summary: Create an API token
       description: >-
         Create a new API token. Session-only (requires sudo). The plaintext
         token is returned ONCE in the response — store it immediately.
@@ -874,6 +3570,25 @@ paths:
                       - name
                       - scope
                       - expiresAt
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -1075,7 +3790,8 @@ paths:
           required: true
   /v1/orgs/{orgSlug}/projects/{projectSlug}/api-tokens/{id}:
     delete:
-      operationId: deleteV1OrgsByOrgSlugProjectsByProjectSlugApiTokensById
+      operationId: revokeApiToken
+      summary: Revoke an API token
       description: >-
         Revoke an API token. Idempotent — returns success even if already
         revoked. Permission: creator OR project owner OR org admin/owner.
@@ -1099,6 +3815,25 @@ paths:
                         type: string
                     required:
                       - id
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
                   errors:
                     type: array
                     items:
@@ -1302,4 +4037,370 @@ paths:
             type: string
           in: path
           name: id
+          required: true
+  /orgs/{orgSlug}/quotas:
+    get:
+      operationId: getQuotaUsage
+      summary: Get quota usage
+      description: >-
+        Read-only quota overview for the current organization. Returns the
+        configured `limits` (or platform defaults if none have been overridden),
+        the current `usage` summed across every project in the org (excluding
+        instances being deprovisioned), and a `hasOverride` flag indicating
+        whether a custom quota row exists.
+      tags:
+        - Quotas
+      responses:
+        '200':
+          description: Quota usage overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      limits:
+                        type: object
+                        properties:
+                          maxInstances:
+                            type: number
+                          maxVolumes:
+                            type: number
+                          maxVolumesSizeGb:
+                            type: number
+                          maxCpuMillicores:
+                            type: number
+                          maxMemoryGi:
+                            type: number
+                        required:
+                          - maxInstances
+                          - maxVolumes
+                          - maxVolumesSizeGb
+                          - maxCpuMillicores
+                          - maxMemoryGi
+                      usage:
+                        type: object
+                        properties:
+                          instances:
+                            type: number
+                          volumes:
+                            type: number
+                          volumesSizeGb:
+                            type: number
+                          cpuMillicores:
+                            type: number
+                          memoryGi:
+                            type: number
+                        required:
+                          - instances
+                          - volumes
+                          - volumesSizeGb
+                          - cpuMillicores
+                          - memoryGi
+                      hasOverride:
+                        type: boolean
+                    required:
+                      - limits
+                      - usage
+                      - hasOverride
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Not a member of this organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+  /v1/orgs/{orgSlug}/quotas:
+    get:
+      operationId: getQuotaUsage
+      summary: Get quota usage
+      description: >-
+        Read-only quota overview for the current organization. Returns the
+        configured `limits` (or platform defaults if none have been overridden),
+        the current `usage` summed across every project in the org (excluding
+        instances being deprovisioned), and a `hasOverride` flag indicating
+        whether a custom quota row exists.
+      tags:
+        - Quotas
+      responses:
+        '200':
+          description: Quota usage overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  result:
+                    type: object
+                    properties:
+                      limits:
+                        type: object
+                        properties:
+                          maxInstances:
+                            type: number
+                          maxVolumes:
+                            type: number
+                          maxVolumesSizeGb:
+                            type: number
+                          maxCpuMillicores:
+                            type: number
+                          maxMemoryGi:
+                            type: number
+                        required:
+                          - maxInstances
+                          - maxVolumes
+                          - maxVolumesSizeGb
+                          - maxCpuMillicores
+                          - maxMemoryGi
+                      usage:
+                        type: object
+                        properties:
+                          instances:
+                            type: number
+                          volumes:
+                            type: number
+                          volumesSizeGb:
+                            type: number
+                          cpuMillicores:
+                            type: number
+                          memoryGi:
+                            type: number
+                        required:
+                          - instances
+                          - volumes
+                          - volumesSizeGb
+                          - cpuMillicores
+                          - memoryGi
+                      hasOverride:
+                        type: boolean
+                    required:
+                      - limits
+                      - usage
+                      - hasOverride
+                  result_info:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                      page:
+                        type: number
+                      per_page:
+                        type: number
+                      total_count:
+                        type: number
+                      total_pages:
+                        type: number
+                    required:
+                      - count
+                      - page
+                      - per_page
+                      - total_count
+                      - total_pages
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Not a member of this organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
           required: true
