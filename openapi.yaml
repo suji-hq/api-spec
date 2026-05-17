@@ -1276,8 +1276,8 @@ paths:
         Fetch a single instance by id. The status field is reconciled against
         the underlying VM before returning, so a row stuck in a transitional
         state (e.g. `starting` after a backend failure) is corrected to the real
-        VM state. Returns 404 — never 403 — on a missing or out-of-scope id to
-        avoid leaking instance existence.
+        VM state. Returns 404 if the instance doesn't exist or isn't accessible
+        to you.
       tags:
         - Instances
       responses:
@@ -10141,8 +10141,8 @@ paths:
       summary: Get an app catalog template
       description: >-
         Return the full catalog template for a slug, including every published
-        version (newest first). Hidden templates return 404 with no existence
-        leak (same response as a truly missing slug).
+        version (newest first). Returns 404 if no published template matches the
+        slug.
       tags:
         - Apps catalog
       responses:
@@ -17018,9 +17018,8 @@ paths:
       summary: Get one org-wide audit event
       description: >-
         Fetch a single org-wide audit event by id. Non-admin members can only
-        see events they triggered. Returns 404 — never 403 — on a missing or
-        out-of-scope id, to avoid leaking the existence of audit events the
-        caller cannot see.
+        see events they triggered. Returns 404 if the event doesn't exist or
+        isn't accessible to you.
       tags:
         - Audit log
       responses:
@@ -17768,9 +17767,8 @@ paths:
       summary: Get one project audit event
       description: >-
         Fetch a single project audit event by id. The event must belong to the
-        current project. Returns 404 — never 403 — on a missing or out-of-scope
-        id, to avoid leaking the existence of audit events the caller cannot
-        see.
+        current project. Returns 404 if the event doesn't exist or isn't
+        accessible to you.
       tags:
         - Audit log
       responses:
@@ -24455,9 +24453,8 @@ paths:
       operationId: getOrg
       summary: Get an organization
       description: >-
-        Fetch the organization identified by `:orgSlug` in the path. The caller
-        must be a member; non-members get 404 (never 403, to avoid leaking org
-        existence).
+        Fetch the organization identified by `:orgSlug` in the path. Returns 404
+        if you're not a member of that organization.
       tags:
         - Organizations
       responses:
@@ -24534,7 +24531,7 @@ paths:
                   - errors
                   - messages
         '404':
-          description: Organization not found (or caller is not a member)
+          description: Organization not found, or you're not a member
           content:
             application/json:
               schema:
