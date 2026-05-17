@@ -106,13 +106,12 @@ paths:
       summary: Create an instance
       description: >-
         Create a new OpenClaw VM in the given region. Returns immediately once
-        the provisioning job is enqueued — the VM transitions through
-        `provisioning` → `running` asynchronously. Quota, platform capacity, and
-        spending hard-caps are all checked up-front; exceeded limits fail
-        without enqueueing the job. The wire contract is provider-neutral:
-        `vmSize` and `region` are Suji slugs (e.g. `small` / `eu-falkenstein`),
-        translated to the underlying provider type internally. Optionally
-        include `sshPubkey` to seed the root account with your public key.
+        provisioning is scheduled — the VM transitions through `provisioning` →
+        `running` asynchronously. Quota, platform capacity, and spending
+        hard-caps are all checked up-front; exceeded limits fail before any
+        provisioning starts. `vmSize` and `region` are Suji slugs (e.g. `small`
+        / `eu-falkenstein`). Optionally include `sshPubkey` to seed the root
+        account with your public key.
       tags:
         - Instances
       requestBody:
@@ -723,11 +722,12 @@ paths:
       operationId: renameInstance
       summary: Rename an instance
       description: >-
-        Rename an instance (the only PATCH-able field today — resize will land
-        in a later release). Supports optimistic concurrency via the
-        `If-Unmodified-Since` request header (HTTP-date at 1-second
-        granularity); a mismatch returns 409 `CONCURRENT_MODIFICATION` so the
-        client can refetch the current `updatedAt` and retry.
+        Update an instance's display `name`. (CPU / memory / storage are not
+        PATCH-able here — use `POST /instances/{id}/resize` for those.) Supports
+        optimistic concurrency via the `If-Unmodified-Since` request header
+        (HTTP-date at 1-second granularity); a mismatch returns 409
+        `CONCURRENT_MODIFICATION` so the client can refetch the current
+        `updatedAt` and retry.
       tags:
         - Instances
       parameters:
@@ -1036,11 +1036,11 @@ paths:
       operationId: deleteInstance
       summary: Delete an instance
       description: >-
-        Schedule the instance for deprovisioning — flips status to
-        `deprovisioning` and enqueues a `vm-deprovision` background job.
-        Repeated DELETEs against an already-deprovisioning instance are
-        idempotent no-ops. The row vanishes from list responses once the
-        background job completes.
+        Schedule the instance for deprovisioning. Status flips to
+        `deprovisioning` and the VM is torn down asynchronously. Repeated
+        DELETEs against an already-deprovisioning instance are idempotent
+        no-ops. The row vanishes from list responses once the deprovision
+        completes.
       tags:
         - Instances
       responses:
@@ -1274,9 +1274,9 @@ paths:
       summary: Get an instance
       description: >-
         Fetch a single instance by id. The status field is reconciled against
-        the cloud-agent before returning, so a row stuck in a transitional state
-        (e.g. `starting` after a worker crash) gets corrected to the real VM
-        state. Returns 404 — never 403 — on a missing or out-of-scope id to
+        the underlying VM before returning, so a row stuck in a transitional
+        state (e.g. `starting` after a backend failure) is corrected to the real
+        VM state. Returns 404 — never 403 — on a missing or out-of-scope id to
         avoid leaking instance existence.
       tags:
         - Instances
@@ -1506,14 +1506,15 @@ paths:
       summary: Install an app on an instance
       description: >-
         Create a new app install on the given OpenClaw instance from a catalog
-        template or an org template. The install is enqueued asynchronously —
-        the response returns immediately with the install id and `status:
+        template or an org template. The install runs asynchronously — the
+        response returns immediately with the install id and `status:
         "installing"`. Spending hard caps (org / project / member) are evaluated
-        up-front; exceeded caps fail with `HARD_CAP_EXCEEDED` and never enqueue
-        the job. Apps whose manifest does not declare `exposure.exposable: true`
-        cannot be exposed via subdomain (`APP_NOT_EXPOSABLE`). When
-        `saveAsOrgTemplate` is set, the unrendered template is also persisted as
-        a new org template (org owners/admins only).
+        up-front; exceeded caps fail with `HARD_CAP_EXCEEDED` before any
+        provisioning starts. Apps whose manifest does not declare
+        `exposure.exposable: true` cannot be exposed via subdomain
+        (`APP_NOT_EXPOSABLE`). When `saveAsOrgTemplate` is set, the unrendered
+        template is also persisted as a new org template (org owners/admins
+        only).
       tags:
         - App installs
       requestBody:
@@ -2114,8 +2115,8 @@ paths:
         Update an install's `config` (merged into existing — missing keys keep
         their current values), bump its `appVersion`, toggle `exposed`, or
         change its `subdomainHint`. At least one field must be supplied. Every
-        change is treated as an "upgrade" — the worker re-renders compose and
-        restarts the stack. Supports optimistic concurrency via the
+        change re-renders the install's compose configuration and restarts the
+        stack asynchronously. Supports optimistic concurrency via the
         `If-Unmodified-Since` request header (HTTP-date at 1-second
         granularity); a mismatch returns 409 `CONCURRENT_MODIFICATION` so the
         client can refetch and retry.
@@ -2778,8 +2779,8 @@ paths:
       operationId: deleteInstall
       summary: Uninstall an app
       description: >-
-        Schedule the install for removal — flips status to `deleting` and
-        enqueues an `app-uninstall` job. Repeated DELETEs against an
+        Schedule the install for removal. Status flips to `deleting` and the
+        install is torn down asynchronously. Repeated DELETEs against an
         already-deleting install are idempotent no-ops.
       tags:
         - App installs
@@ -3330,8 +3331,9 @@ paths:
       operationId: getInstallVolumes
       summary: Get install volumes
       description: >-
-        List the docker volumes (named + bind mounts) backing the install. Used
-        by the per-install Files tab to populate its volume picker.
+        List the docker volumes (named + bind mounts) backing the install. Each
+        volume name can be passed to the file-browser endpoints as
+        `?root=install:<installId>:<volumeName>`.
       tags:
         - App installs
       responses:
@@ -3639,9 +3641,8 @@ paths:
       operationId: restartInstall
       summary: Restart an install
       description: >-
-        Restart the install's docker compose stack on the instance. Enqueues an
-        `app-restart` job — the response returns immediately once the job is
-        queued.
+        Restart the install's docker compose stack on the instance. The restart
+        is performed asynchronously; the response returns immediately.
       tags:
         - App installs
       responses:
@@ -3831,11 +3832,10 @@ paths:
       summary: Rotate auto-generated secrets
       description: >-
         Regenerate the `auto_generate: true` secret fields declared by the
-        install's manifest, then enqueue an `app-upgrade` so the running
-        container picks up the new values via environment variables. Pass `keys`
-        to restrict rotation to a subset of auto-generate fields; omit it to
-        rotate every auto-generate field. User-supplied secrets are never
-        touched.
+        install's manifest and apply the new values to the running container via
+        an asynchronous upgrade. Pass `keys` to restrict rotation to a subset of
+        auto-generate fields; omit it to rotate every auto-generate field.
+        User-supplied secrets are never touched.
       tags:
         - App installs
       requestBody:
@@ -4100,12 +4100,12 @@ paths:
       operationId: validateInstallsBulk
       summary: Validate a batch of candidate installs
       description: >-
-        Wizard pre-flight: validate a batch (1-20) of candidate installs against
-        their manifests without writing anything to the database or enqueueing
-        any jobs. Returns `valid: true` when every candidate passes; otherwise
-        `errors` is keyed by the candidate's index (as a string) with the list
-        of failures (form errors, license denial, missing template, …).
-        Read-only — does not require a read-write token.
+        Pre-flight: validate a batch (1-20) of candidate installs against their
+        manifests without persisting or installing anything. Returns `valid:
+        true` when every candidate passes; otherwise `errors` is keyed by the
+        candidate's index (as a string) with the list of failures (form errors,
+        license denial, missing template, …). Read-only — does not require a
+        read-write token.
       tags:
         - App installs
       requestBody:
@@ -4304,12 +4304,10 @@ paths:
       operationId: getInstancePool
       summary: Get instance pool (billing + capacity)
       description: >-
-        Return a billing-pool summary for the current project: org-level credit
-        balance (cents), aggregate burn rate (cents/hour) across all org
-        instances, projected `hoursRemaining` until the balance hits zero (null
-        when the burn rate is zero), and the active instance count for the
-        current project. The dashboard renders this on the instances list to
-        warn users before they run out of credit.
+        Return the project's current credit position: org-level balance (cents),
+        aggregate burn rate (cents/hour) across all org instances, projected
+        `hoursRemaining` until the balance hits zero (null when burn is zero),
+        and the project's active instance count.
       tags:
         - Instances
       responses:
@@ -4395,10 +4393,10 @@ paths:
       operationId: stopInstance
       summary: Stop an instance
       description: >-
-        Enqueue a graceful stop of a running instance. Flips the status to
-        `stopping` immediately and returns; the worker powers off the VM
-        asynchronously and flips the status to `stopped` on completion. Only
-        valid from `running` — any other state returns 409.
+        Gracefully stop a running instance. Status flips to `stopping`
+        immediately and returns; the VM is powered off asynchronously and the
+        status flips to `stopped` on completion. Only valid from `running` — any
+        other state returns 409.
       tags:
         - Instances
       responses:
@@ -4693,11 +4691,11 @@ paths:
       operationId: startInstance
       summary: Start an instance
       description: >-
-        Enqueue a start of a stopped (or `error`) instance. Flips the status to
-        `starting` immediately and returns; the worker boots the VM
-        asynchronously and flips to `running` on completion. Suspended instances
-        (paused for non-payment) return 402 — call `POST /:id/resume` after
-        topping up instead.
+        Start a stopped (or `error`) instance. Status flips to `starting`
+        immediately and returns; the VM is booted asynchronously and the status
+        flips to `running` on completion. Suspended instances (paused for
+        non-payment) return 402 — call `POST /:id/resume` after topping up
+        instead.
       tags:
         - Instances
       responses:
@@ -5043,12 +5041,11 @@ paths:
       summary: Resume a suspended instance
       description: >-
         Resume a billing-suspended instance after the org has been topped up.
-        Distinct from `POST /:id/start` because suspension is billing-driven —
-        we gate resumption on a non-zero credit balance and clear `suspendedAt`
-        so the suspended-reaper doesn't sweep the row mid-resume. Only valid
-        from `suspended`. Underlying provider VM stays allocated through
-        suspension (powered off, not deleted), so resume is identical to start
-        once the gate passes.
+        Distinct from `POST /:id/start`: resumption is gated on a non-zero
+        credit balance, since suspension is billing-driven. Only valid from
+        `suspended`. The underlying VM stays allocated through suspension
+        (powered off, not deleted), so resume behaves like start once the credit
+        gate passes.
       tags:
         - Instances
       responses:
@@ -5393,10 +5390,10 @@ paths:
       operationId: restartInstance
       summary: Restart an instance
       description: >-
-        Enqueue a restart (stop-then-start) of a running instance. Flips the
-        status to `restarting` immediately and returns; the worker performs the
-        restart asynchronously and flips back to `running` on completion. Only
-        valid from `running`.
+        Restart (stop-then-start) a running instance. Status flips to
+        `restarting` immediately and returns; the restart is performed
+        asynchronously and the status flips back to `running` on completion.
+        Only valid from `running`.
       tags:
         - Instances
       responses:
@@ -5693,10 +5690,9 @@ paths:
       description: >-
         Return the instance's public IPv4 / IPv6 addresses and the
         current-billing-period traffic counters as reported by the cloud
-        provider. Mid-provisioning VMs (no `providerServerId` yet) return the
-        best info available — the row's `publicIp` as `ipv4` and zeroed counters
-        — instead of an error. Counter updates may lag real wire traffic by a
-        few minutes.
+        provider. Mid-provisioning VMs return the best info available —
+        `publicIp` as `ipv4` and zeroed counters — instead of an error. Counter
+        updates may lag real wire traffic by a few minutes.
       tags:
         - Instances
       responses:
@@ -5842,11 +5838,10 @@ paths:
       operationId: getInstanceFirewall
       summary: List per-instance firewall rules
       description: >-
-        Return the cloud-provider firewall rules currently applied to the
-        instance's VM. Mid-provisioning instances (no `providerServerId` yet)
-        return an empty rule list. Wire field names are snake_case to match the
-        cloud-agent / provider contract verbatim — see `firewallRuleSchema` for
-        the per-rule semantics.
+        Return the firewall rules currently applied to the instance's VM.
+        Mid-provisioning instances return an empty rule list. See
+        `firewallRuleSchema` for the per-rule semantics; field names on the wire
+        are snake_case.
       tags:
         - Instances
       responses:
@@ -5997,7 +5992,7 @@ paths:
                   - errors
                   - messages
         '502':
-          description: Cloud-agent failed to return the firewall rules
+          description: Upstream failure fetching the firewall rules
           content:
             application/json:
               schema:
@@ -6066,12 +6061,12 @@ paths:
       operationId: updateInstanceFirewall
       summary: Replace per-instance firewall rules
       description: >-
-        Replace the cloud-provider firewall rule set applied to the VM with the
-        supplied list (max 50 rules). The call is a full replace, not a patch —
-        omitted rules are removed. The cloud-agent re-injects a default
-        `in/tcp/22 SSH` rule on every save unless the body supplies its own
-        `in/tcp/22` override. Returns `{ status: 'ok' }`; clients reload via
-        `GET /:id/firewall` to see the canonical state.
+        Replace the firewall rule set applied to the VM with the supplied list
+        (max 50 rules). The call is a full replace, not a patch — omitted rules
+        are removed. A default `in/tcp/22 SSH` rule is re-injected on every save
+        unless the body supplies its own `in/tcp/22` override. Returns `{
+        status: 'ok' }`; clients reload via `GET /:id/firewall` to see the
+        canonical state.
       tags:
         - Instances
       requestBody:
@@ -6434,7 +6429,7 @@ paths:
                   - errors
                   - messages
         '502':
-          description: Cloud-agent failed to apply the firewall rules
+          description: Upstream failure applying the firewall rules
           content:
             application/json:
               schema:
@@ -6504,12 +6499,12 @@ paths:
       operationId: resizeInstance
       summary: Resize an instance
       description: >-
-        Change the instance's CPU, memory, and/or storage. The DB row is updated
-        immediately; if the instance is `running`, `stopped`, `error`, or
-        `suspended` the change is also applied to the underlying VM via a
-        background resize job. `upgradeDisk` (default true) controls whether the
-        disk is grown immediately as part of the same job. Storage can only grow
-        — shrink requests return 409 `INVALID_RESIZE`. A no-op resize (same
+        Change the instance's CPU, memory, and/or storage. The instance record
+        is updated immediately; if the instance is `running`, `stopped`,
+        `error`, or `suspended` the change is also applied to the underlying VM
+        asynchronously. `upgradeDisk` (default true) controls whether the disk
+        is grown immediately as part of the same operation. Storage can only
+        grow — shrink requests return 409 `INVALID_RESIZE`. A no-op resize (same
         values) returns 200 with the current instance snapshot.
       tags:
         - Instances
@@ -6829,9 +6824,9 @@ paths:
       operationId: getInstanceLogs
       summary: Read or stream instance logs
       description: >-
-        Return the most recent `?lines=` lines of guest-agent log output for the
-        instance (default 100, max 10000). The response body is documented for
-        the JSON tail mode below.
+        Return the most recent `?lines=` lines of log output for the instance
+        (default 100, max 10000). The response body is documented for the JSON
+        tail mode below.
 
 
         When `?follow=true`, the response upgrades to a `text/event-stream`
@@ -7125,9 +7120,9 @@ paths:
       description: >-
         Return the most recent CPU, memory, network, storage, and uptime probe
         data for the instance, plus a rolling 10-minute history series for each
-        (stored in Redis, sampled on each call). Storage / network counters are
-        absolute; the network `history` block surfaces per-sample throughput
-        rates derived from the deltas.
+        (sampled on each call). Storage / network counters are absolute; the
+        network `history` block surfaces per-sample throughput rates derived
+        from the deltas.
       tags:
         - Instances
       responses:
@@ -7506,9 +7501,8 @@ paths:
       description: >-
         Return the instance's outgoing traffic counter for the current billing
         month, along with the included `freeBytes` allowance and the per-GiB
-        overage rate (in cents). The counter is updated periodically by the
-        metering worker; values you read here may lag real wire traffic by up to
-        a few minutes.
+        overage rate (in cents). Counters are refreshed periodically and may lag
+        real wire traffic by a few minutes.
       tags:
         - Instances
       responses:
@@ -7653,11 +7647,10 @@ paths:
       summary: Get historical instance analytics
       description: >-
         Return historical CPU / memory / storage time-series for the instance
-        over the requested `?range=` window (default `24h`). The series come
-        from Mimir (long-term metrics store) with a Redis snapshot fallback for
-        very recent windows when Mimir hasn't ingested the latest sample yet.
-        The step / resolution is paired with the range — 1m for 1h, 1d for 90d,
-        etc.
+        over the requested `?range=` window (default `24h`). Recent samples may
+        be served from a short-term cache when the long-term store hasn't
+        ingested them yet. Step / resolution is paired with the range — 1m for
+        1h, 1d for 90d, etc.
       tags:
         - Instances
       responses:
@@ -7928,11 +7921,9 @@ paths:
       summary: List recent instance events
       description: >-
         Return the most recent `?limit=` events (default 50, max 200) for the
-        instance, newest-first. Events are status-log entries written by the
-        provisioner / lifecycle workers — provisioning steps, errors during a
-        restart, snapshot completion, etc. The response is a plain tail (no
-        cursor pagination); for live updates, the dashboard uses a
-        server-sent-event stream (not exposed in this spec).
+        instance, newest-first. Events are status-log entries — provisioning
+        steps, errors during a restart, snapshot completion, etc. The response
+        is a plain tail (no cursor pagination).
       tags:
         - Instances
       responses:
@@ -8307,13 +8298,12 @@ paths:
         `mode: "hot"` snapshots the live disk with no downtime. Returns
         immediately with `status: "uploading"` and `progress: 0`; clients poll
         `GET /:id/snapshots` to watch progress. If the per-plan or per-user
-        quota is at limit, the oldest manual snapshot is auto-rotated before the
-        new one starts (no client opt-out today).
+        quota is at its limit, the oldest manual snapshot is auto-rotated before
+        the new one starts.
 
 
-        Gated on the org-level spending hard cap. The path is singular
-        (`/snapshot`) for historical reasons — the matching list endpoint is
-        plural (`/snapshots`).
+        Gated on the org-level spending hard cap. Note the path is singular
+        (`/snapshot`) — the matching list endpoint is plural (`/snapshots`).
       tags:
         - Instances
       requestBody:
@@ -8771,10 +8761,10 @@ paths:
         Queue a restore of the instance from one of the caller's snapshots.
         Cross-instance restore is allowed — `snapshotId` may belong to a
         different instance, as long as both belong to the calling user. The
-        instance status flips to `restoring` immediately; the worker
-        re-provisions the disk and flips back to `running` (or `error`) on
-        completion. Gated on the org-level spending hard cap (restore
-        re-provisions storage + reads from S3 = billable egress).
+        instance status flips to `restoring` immediately; the disk is
+        re-provisioned asynchronously and the status flips back to `running` (or
+        `error`) on completion. Gated on the org-level spending hard cap
+        (restore re-provisions storage and incurs billable egress).
       tags:
         - Instances
       requestBody:
@@ -9124,9 +9114,9 @@ paths:
       summary: Delete a snapshot
       description: >-
         Delete a snapshot owned by the calling user. The cloud-provider snapshot
-        is also removed; legacy S3 objects (if any) are best-effort deleted.
-        Returns the deleted snapshot id. Snapshots in `uploading` state cannot
-        be deleted — wait for completion (or let it time out) first.
+        is also removed; any backing objects are best-effort deleted. Returns
+        the deleted snapshot id. Snapshots in `uploading` state cannot be
+        deleted — wait for completion (or let it time out) first.
       tags:
         - Instances
       responses:
@@ -9510,9 +9500,8 @@ paths:
       description: >-
         Attach an existing project-level SSH key (owned by the calling user) to
         this instance. If the instance is running, the VM's `authorized_keys`
-        file is also rewritten via guest-agent — failures to push to the live VM
-        are logged but do not fail the attach (the key takes effect on the next
-        instance boot regardless).
+        file is rewritten in place; if that push fails, the attach still
+        succeeds and the key takes effect on the next instance boot.
       tags:
         - Instances
       requestBody:
@@ -9809,10 +9798,9 @@ paths:
       summary: Detach an SSH key from an instance
       description: >-
         Remove a per-instance SSH key attachment. If the instance is running,
-        the VM's `authorized_keys` file is also rewritten via guest-agent —
-        failures to push to the live VM are logged but do not fail the detach
-        (the key is removed on the next instance boot regardless). Returns the
-        detached SSH key id.
+        the VM's `authorized_keys` file is rewritten in place; if that push
+        fails, the detach still succeeds and the key is removed on the next
+        instance boot. Returns the detached SSH key id.
       tags:
         - Instances
       responses:
@@ -10153,9 +10141,8 @@ paths:
       summary: Get an app catalog template
       description: >-
         Return the full catalog template for a slug, including every published
-        version (newest first). Used by the install wizard to render version
-        pickers and manifest forms. Hidden templates return 404 with no
-        existence leak (same response as a truly missing slug).
+        version (newest first). Hidden templates return 404 with no existence
+        leak (same response as a truly missing slug).
       tags:
         - Apps catalog
       responses:
@@ -11580,10 +11567,10 @@ paths:
       summary: Open a top-up checkout session
       description: >-
         Create a Stripe-hosted Checkout session for a one-time credit top-up.
-        The response carries the checkout URL; the dashboard redirects the user
-        there. Actual credit lands in the org's balance when Stripe fires the
-        `checkout.session.completed` webhook — this endpoint only opens the
-        session. Rate-limited to 10 sessions per hour per user. Admin+ only.
+        The response carries the checkout URL to redirect the browser to. Credit
+        lands in the org's balance once the payment completes — this endpoint
+        only opens the session. Rate-limited to 10 sessions per hour per user.
+        Admin+ only.
       tags:
         - Org billing
       requestBody:
@@ -12377,9 +12364,8 @@ paths:
       summary: List server-type pricing
       description: >-
         Read the per-hour cost in cents for every active server type. Open to
-        all org members (drives the cost-preview widget on the New Instance
-        page). The `serverType` slug is internal — customer UIs should render
-        `displayName` instead.
+        all org members. The `serverType` slug is internal — render
+        `displayName` in customer-facing UI.
       tags:
         - Org billing
       responses:
@@ -12469,11 +12455,9 @@ paths:
       operationId: createBillingPortalSession
       summary: Open the Stripe billing portal
       description: >-
-        Open a Stripe Checkout session in `setup` mode so the user can add a
-        payment method. (Despite the route name, this currently opens a
-        setup-checkout session rather than the full Stripe Customer Portal —
-        historical naming.) Returns the Stripe-hosted URL the dashboard
-        redirects the browser to. Admin+ only.
+        Create a Stripe Checkout session (setup mode) for adding a payment
+        method. Returns the Stripe-hosted URL to redirect the browser to. Admin+
+        only.
       tags:
         - Org billing
       requestBody:
@@ -13155,10 +13139,9 @@ paths:
       summary: List saved cards
       description: >-
         List the saved cards on the org's Stripe customer with brand + last4.
-        Self-heals a stale `stripeCustomerId` left over from a Stripe key
-        rotation, and auto-promotes the sole card to default when Stripe didn't
-        set one (which happens on first card added via Customer Portal). Returns
-        an empty list for orgs with no Stripe customer yet. Admin+ only.
+        When there is exactly one card and Stripe hasn't marked it as default,
+        it is auto-promoted to default. Returns an empty list for orgs with no
+        Stripe customer yet. Admin+ only.
       tags:
         - Org billing
       responses:
@@ -13474,9 +13457,8 @@ paths:
       description: >-
         Top-up payment history with Stripe-hosted invoice URLs (page + PDF)
         attached when available. Optional `from`/`to` clamp the range
-        inclusively (YYYY-MM-DD dates are bumped to end-of-day). Top-ups paid
-        before invoice_creation was enabled won't have invoice URLs. Admin+
-        only.
+        inclusively (YYYY-MM-DD dates are bumped to end-of-day). Older top-ups
+        may not have invoice URLs attached. Admin+ only.
       tags:
         - Org billing
       responses:
@@ -14325,8 +14307,7 @@ paths:
       summary: List per-member spending caps
       description: >-
         List every per-member monthly spending cap configured in the
-        organization. Each row is joined with the member's `email` and `name` so
-        the dashboard can render the table without a second round-trip.
+        organization. Each row includes the member's `email` and `name`.
         Unpaginated — typical orgs have a handful of caps at most. Admin+ only.
       tags:
         - Org billing
@@ -15687,11 +15668,10 @@ paths:
       operationId: reapplyConnector
       summary: Re-apply a connector
       description: >-
-        Force-push the connector's current config to the running OpenClaw
-        install. Useful when the in-VM config has drifted (e.g. after a manual
-        edit) — the DB row remains the source of truth. Status is optimistically
-        set to `connected`; the next status sync will correct it if the push
-        actually failed.
+        Re-push the connector's stored configuration to the running OpenClaw
+        install. Useful if the in-VM configuration has drifted. Status is set to
+        `connected` optimistically; if the push fails, the next status sync
+        corrects it.
       tags:
         - Connectors
       responses:
@@ -15963,11 +15943,10 @@ paths:
       operationId: syncConnectorStatuses
       summary: Sync connector statuses
       description: >-
-        Reconcile every connector on this instance's DB `status` with what's
-        actually applied on the running OpenClaw. Connectors whose channel is
-        present are marked `connected`; missing channels are marked
-        `disconnected` AND re-applied in the same call. Returns the refreshed
-        connector list.
+        Reconcile each connector's stored `status` with what is actually applied
+        on the running OpenClaw instance. Connectors whose channel is present
+        are marked `connected`; missing channels are marked `disconnected` and
+        re-applied in the same call. Returns the refreshed connector list.
       tags:
         - Connectors
       responses:
@@ -16244,13 +16223,13 @@ paths:
         non-deprovisioning instances.
 
         - **`instances[]`** — per-instance row with the latest live
-        CPU/memory/storage usage from Redis (nullable when the worker snapshot
-        is stale).
+        CPU/memory/storage usage (values are nullable when no recent sample is
+        available).
 
-        - **`trends`** — 7-day trend series queried best-effort from Mimir
-        (empty arrays if the metrics backend is unreachable). Each point is `{
-        t, v }` where `t` is unix seconds and `v` is **millicores for `cpu`, MiB
-        for `memory`, GiB for `storage`**.
+        - **`trends`** — 7-day trend series (best-effort; empty arrays if the
+        metrics backend is unreachable). Each point is `{ t, v }` where `t` is
+        unix seconds and `v` is **millicores for `cpu`, MiB for `memory`, GiB
+        for `storage`**.
       tags:
         - Analytics
       responses:
@@ -16756,8 +16735,7 @@ paths:
       description: >-
         Return the count of `warning` and `critical` severity audit events in
         the last 24 hours, org-wide (non-admin members see only their own
-        events). Used by the dashboard banner — small, cacheable, never
-        paginated.
+        events). Small, cacheable, never paginated.
       tags:
         - Audit log
       responses:
@@ -17497,8 +17475,7 @@ paths:
       description: >-
         Return the count of `warning` and `critical` severity audit events in
         the last 24 hours, restricted to the current project (all project
-        members see all events). Used by the dashboard banner — small,
-        cacheable, never paginated.
+        members see all events). Small, cacheable, never paginated.
       tags:
         - Audit log
       responses:
@@ -18188,12 +18165,11 @@ paths:
       operationId: listRestorableSnapshots
       summary: List restorable snapshots
       description: >-
-        Return every `ready` snapshot in the current project, grouped by the
-        source instance, for the new-instance restore selector. Each snapshot is
-        best-effort enriched with `sourceDiskGb` so the UI can prevent picking a
-        server type smaller than the snapshot needs; if the cloud provider
-        lookup fails the field is `null` and the backend validates the restore
-        separately.
+        Return every `ready` snapshot in the current project, grouped by source
+        instance. Each snapshot is best-effort enriched with `sourceDiskGb` so
+        callers can avoid choosing a server type smaller than the snapshot
+        requires; if the cloud provider lookup fails the field is `null` and the
+        restore call validates the size on its own.
       tags:
         - Snapshots
       responses:
@@ -20501,8 +20477,7 @@ paths:
       description: >-
         List every block-storage volume belonging to the current project. Pass
         `?instanceId=` to filter to volumes attached to one instance. Each row
-        is sanitized — provider-internal ids are dropped and
-        `region`/`regionLabel` are derived from the storage location.
+        includes `region` and `regionLabel`.
       tags:
         - Volumes
       responses:
@@ -20658,9 +20633,9 @@ paths:
       description: >-
         Create a block-storage volume in the given region. The volume is billed
         hourly from creation; quota and credit-balance checks are enforced
-        before the cloud-provider call. Optionally `autoMount: true` (default)
-        leaves the volume ready to be attached and mounted on a running
-        instance, formatting it with `filesystem` (`ext4` or `xfs`).
+        before provisioning. Set `autoMount: true` (default) to leave the volume
+        ready to be attached and mounted on a running instance, formatting it
+        with `filesystem` (`ext4` or `xfs`).
       tags:
         - Volumes
       requestBody:
@@ -21198,8 +21173,8 @@ paths:
       operationId: getVolume
       summary: Get a volume
       description: >-
-        Get a single volume by id. Returns the sanitized row (provider-internal
-        ids stripped, `region`/`regionLabel` derived).
+        Get a single volume by id. The response includes `region` and
+        `regionLabel`.
       tags:
         - Volumes
       responses:
@@ -22062,9 +22037,8 @@ paths:
       description: >-
         Grow a volume to a larger size. Shrinking is not supported. If the
         volume is attached to a running instance with `autoMount`, the in-VM
-        filesystem is grown best-effort via the guest-agent; a failure to grow
-        the filesystem is non-fatal (the volume itself is resized at the
-        provider).
+        filesystem is grown best-effort; a failure to grow the filesystem is
+        non-fatal (the volume itself is still resized).
       tags:
         - Volumes
       requestBody:
@@ -22537,9 +22511,9 @@ paths:
       description: >-
         Attach a detached volume to an instance in the same project and region.
         The instance must be running or stopped. If the volume has `autoMount`
-        and the instance is running, the guest-agent mounts the volume at
-        `/mnt/vol-<name>`; if the mount step fails, the volume is still attached
-        but `errorMessage` records the failure.
+        and the instance is running, the volume is mounted at `/mnt/vol-<name>`;
+        if the mount step fails, the volume is still attached but `errorMessage`
+        records the failure.
       tags:
         - Volumes
       requestBody:
@@ -22962,9 +22936,9 @@ paths:
       summary: Detach a volume
       description: >-
         Detach a volume from its current instance. If the volume is mounted on a
-        running instance, the guest-agent unmounts it first; if a process on the
-        instance still holds the mount, the call is rejected with `VOLUME_BUSY`
-        so callers can stop the process and retry instead of risking data loss.
+        running instance, it is unmounted first; if a process on the instance
+        still holds the mount, the call is rejected with `VOLUME_BUSY` so
+        callers can stop the process and retry instead of risking data loss.
       tags:
         - Volumes
       responses:
@@ -23732,10 +23706,8 @@ paths:
       summary: Get project preferences
       description: >-
         Read the per-project defaults applied when creating new resources —
-        `defaultSshKeyId` (selected in the new-instance wizard) and
-        `defaultBackupRetentionDays` (used by the snapshot retention pipeline
-        once wired up). When no row exists, platform defaults are synthesised
-        and returned (no SSH key, 7-day backup retention).
+        `defaultSshKeyId` and `defaultBackupRetentionDays`. When no row exists,
+        platform defaults are returned (no SSH key, 7-day backup retention).
       tags:
         - Project preferences
       responses:
@@ -24283,8 +24255,7 @@ paths:
       summary: Create an organization
       description: >-
         Create a new organization. The caller becomes its sole owner. A
-        `Default` project is auto-created inside the new org so the dashboard's
-        `/<org>/<project>/...` URLs have somewhere to land. When `slug` is
+        `Default` project is auto-created inside the new org. When `slug` is
         omitted, one is derived from `name` (lowercased, non-alphanumerics
         replaced with `-`, max 32 chars).
       tags:
@@ -24623,9 +24594,8 @@ paths:
       summary: Update an organization
       description: >-
         Update one or more of `name`, `slug`, `avatarUrl`. Only org admins and
-        owners may call this. Changing `slug` triggers a uniqueness check; the
-        dashboard URL prefix `/app/<slug>/...` changes immediately for every
-        member.
+        owners may call this. Changing `slug` triggers a uniqueness check and
+        takes effect immediately for every member.
       tags:
         - Organizations
       requestBody:
@@ -24881,8 +24851,7 @@ paths:
         Permanently delete an organization and every project / member inside it.
         The caller must be the sole owner; the org must contain zero instances,
         snapshots, and volumes; and the caller must belong to at least one other
-        org afterwards (so the dashboard URL routing always has a home org to
-        fall back to).
+        org afterwards.
       tags:
         - Organizations
       responses:
@@ -25056,8 +25025,7 @@ paths:
       description: >-
         Return the caller's role inside `:orgSlug` and the list of projects they
         can access — either through explicit project membership or through org
-        owner/admin inheritance. The dashboard uses this to render the project
-        switcher and gate management UI.
+        owner/admin inheritance.
       tags:
         - Organizations
       responses:
