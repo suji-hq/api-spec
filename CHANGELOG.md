@@ -1,3 +1,19 @@
+## 2026-05-17 — commit 05b9cdc
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### POST /v1/orgs
+-  added the non-success response with the status `422`
+-  added the non-success response with the status `429`
+
+
+
+
+
+
+
 ## 2026-05-17 — commit 93e87f3
 # API Changelog 1.0.0 vs. 1.0.0
 

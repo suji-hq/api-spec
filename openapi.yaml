@@ -24256,6 +24256,11 @@ paths:
         `Default` project is auto-created inside the new org. When `slug` is
         omitted, one is derived from `name` (lowercased, non-alphanumerics
         replaced with `-`, max 32 chars).
+
+
+        A single user can own at most 10 organizations; further creates return
+        422 `QUOTA_EXCEEDED` until you delete one. Rate-limited to 5 creates per
+        hour per user.
       tags:
         - Organizations
       requestBody:
@@ -24400,6 +24405,106 @@ paths:
                   - messages
         '409':
           description: Requested slug is already in use by another organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '422':
+          description: You already own 10 organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '429':
+          description: Rate limited (5 creates per hour per user)
           content:
             application/json:
               schema:
