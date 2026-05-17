@@ -24260,7 +24260,9 @@ paths:
 
         A single user can own at most 10 organizations; further creates return
         422 `QUOTA_EXCEEDED` until you delete one. Rate-limited to 5 creates per
-        hour per user.
+        hour per user. The first organization can be created with an unverified
+        email; creating a second or more requires email verification (returns
+        403 `EMAIL_VERIFICATION_REQUIRED`).
       tags:
         - Organizations
       requestBody:
@@ -24355,6 +24357,56 @@ paths:
           description: >-
             Slug failed validation (too short / too long / reserved / invalid
             chars)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '403':
+          description: Email must be verified before creating additional organizations
           content:
             application/json:
               schema:
