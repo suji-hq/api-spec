@@ -105,13 +105,14 @@ paths:
       operationId: createInstance
       summary: Create an instance
       description: >-
-        Create a new OpenClaw VM in the given region. Returns immediately once
-        provisioning is scheduled — the VM transitions through `provisioning` →
-        `running` asynchronously. Quota, platform capacity, and spending
-        hard-caps are all checked up-front; exceeded limits fail before any
-        provisioning starts. `vmSize` and `region` are Suji slugs (e.g. `small`
-        / `eu-falkenstein`). Optionally include `sshPubkey` to seed the root
-        account with your public key.
+        Create a new VM in the given region. The instance is generic compute —
+        install apps from the marketplace separately via the `installs`
+        endpoints. Returns immediately once provisioning is scheduled; the VM
+        transitions through `provisioning` → `running` asynchronously. Quota,
+        platform capacity, and spending hard-caps are all checked up-front;
+        exceeded limits fail before any provisioning starts. `vmSize` and
+        `region` are Suji slugs (e.g. `small` / `eu-falkenstein`). Optionally
+        include `sshPubkey` to seed the root account with your public key.
       tags:
         - Instances
       requestBody:
@@ -1505,16 +1506,15 @@ paths:
       operationId: createInstall
       summary: Install an app on an instance
       description: >-
-        Create a new app install on the given OpenClaw instance from a catalog
-        template or an org template. The install runs asynchronously — the
-        response returns immediately with the install id and `status:
-        "installing"`. Spending hard caps (org / project / member) are evaluated
-        up-front; exceeded caps fail with `HARD_CAP_EXCEEDED` before any
-        provisioning starts. Apps whose manifest does not declare
-        `exposure.exposable: true` cannot be exposed via subdomain
-        (`APP_NOT_EXPOSABLE`). When `saveAsOrgTemplate` is set, the unrendered
-        template is also persisted as a new org template (org owners/admins
-        only).
+        Create a new app install on the given instance from a catalog template
+        or an org template. The install runs asynchronously — the response
+        returns immediately with the install id and `status: "installing"`.
+        Spending hard caps (org / project / member) are evaluated up-front;
+        exceeded caps fail with `HARD_CAP_EXCEEDED` before any provisioning
+        starts. Apps whose manifest does not declare `exposure.exposable: true`
+        cannot be exposed via subdomain (`APP_NOT_EXPOSABLE`). When
+        `saveAsOrgTemplate` is set, the unrendered template is also persisted as
+        a new org template (org owners/admins only).
       tags:
         - App installs
       requestBody:
@@ -1904,8 +1904,8 @@ paths:
       operationId: listInstalls
       summary: List installs on an instance
       description: >-
-        List every app install on the given OpenClaw instance. The
-        `encryptedSecrets` column is stripped from each row.
+        List every app install on the given instance. The `encryptedSecrets`
+        column is stripped from each row.
       tags:
         - App installs
       responses:
@@ -14770,9 +14770,12 @@ paths:
       operationId: listConnectors
       summary: List connectors
       description: >-
-        List every messaging-channel connector configured for the given OpenClaw
-        instance. Secret-bearing values inside each connector `config` are
-        masked to `••••<last4>`; the raw secrets are never returned by this API.
+        List every messaging-channel connector configured on the OpenClaw
+        install running on the given instance. Connectors are an OpenClaw-app
+        feature; this endpoint returns an empty list for instances without an
+        OpenClaw install. Secret-bearing values inside each connector `config`
+        are masked to `••••<last4>`; the raw secrets are never returned by this
+        API.
       tags:
         - Connectors
       responses:
@@ -14940,11 +14943,13 @@ paths:
       operationId: createConnector
       summary: Create a connector
       description: >-
-        Create a messaging-channel connector on the given OpenClaw instance.
-        Only one connector per channel per instance is allowed — a duplicate
-        request returns `DUPLICATE_KEY`. The `config` payload is encrypted at
-        rest. If the instance is running, the new channel is asynchronously
-        applied to it (typically within a few seconds).
+        Create a messaging-channel connector on the OpenClaw install running on
+        the given instance. Connectors are an OpenClaw-app feature and require
+        an OpenClaw install on the instance. Only one connector per channel per
+        instance is allowed — a duplicate request returns `DUPLICATE_KEY`. The
+        `config` payload is encrypted at rest. If the instance is running, the
+        new channel is asynchronously applied to it (typically within a few
+        seconds).
       tags:
         - Connectors
       requestBody:
@@ -15944,8 +15949,8 @@ paths:
       summary: Sync connector statuses
       description: >-
         Reconcile each connector's stored `status` with what is actually applied
-        on the running OpenClaw instance. Connectors whose channel is present
-        are marked `connected`; missing channels are marked `disconnected` and
+        on the running OpenClaw install. Connectors whose channel is present are
+        marked `connected`; missing channels are marked `disconnected` and
         re-applied in the same call. Returns the refreshed connector list.
       tags:
         - Connectors

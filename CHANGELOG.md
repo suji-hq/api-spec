@@ -1,3 +1,10 @@
+## 2026-05-19 — commit 84b8da0
+# API Changelog 1.0.0 vs. 1.0.0
+
+No changes to report, but the specs are different
+
+
+
 ## 2026-05-17 — commit 526097b
 # API Changelog 1.0.0 vs. 1.0.0
 
