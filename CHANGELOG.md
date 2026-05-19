@@ -1,3 +1,262 @@
+## 2026-05-19 — commit d3e4b08
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/apps
+- :warning: api path removed without deprecation
+
+
+### GET /v1/apps/{slug}
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/audit-log
+-  removed the `connector` enum value from the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/export
+-  removed the `connector` enum value from the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/{id}
+-  removed the `connector` enum value from the `result/resourceType` response property for the response status `200`
+
+
+### POST /v1/orgs/{orgSlug}/billing/auto-top-up
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/balance
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/invoices
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/member-caps
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/billing/member-caps/{userId}
+- :warning: api path removed without deprecation
+
+
+### PUT /v1/orgs/{orgSlug}/billing/member-caps/{userId}
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/payment-methods
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/billing/payment-methods/{id}
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/billing/payment-methods/{id}/default
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/payments
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/billing/portal
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/pricing
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/profile
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/billing/profile
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/spending-caps
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/billing/spending-caps
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/billing/top-up
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/transactions
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/usage-chart
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/billing/usage-summary
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log
+-  removed the `connector` enum value from the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/export
+-  removed the `connector` enum value from the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/{id}
+-  removed the `connector` enum value from the `result/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/pool
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/analytics
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}/logs
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}/restart
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}/rotate-secrets
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs/{installId}/volumes
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/installs:validate-bulk
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/metrics
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/network
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/resume
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/snapshots
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/traffic
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors/sync-status
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors/{connectorId}
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors/{connectorId}
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{instanceId}/connectors/{connectorId}/reapply
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/preferences
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/preferences
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots/for-restore
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/projects/{projectSlug}/spending-cap
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/spending-cap
+- :warning: api path removed without deprecation
+
+
+### PUT /v1/orgs/{orgSlug}/projects/{projectSlug}/spending-cap
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/templates
+- :warning: api path removed without deprecation
+
+
+### POST /v1/orgs/{orgSlug}/templates
+- :warning: api path removed without deprecation
+
+
+### DELETE /v1/orgs/{orgSlug}/templates/{id}
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/templates/{id}
+- :warning: api path removed without deprecation
+
+
+### PATCH /v1/orgs/{orgSlug}/templates/{id}
+- :warning: api path removed without deprecation
+
+
+
+
+
+
+
 ## 2026-05-19 — commit 5553d1a
 # API Changelog 1.0.0 vs. 1.0.0
 
