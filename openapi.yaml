@@ -39,41 +39,13 @@ tags:
   - name: Quotas
     description: Read your organization's resource limits and current usage.
   - name: Instances
-    description: OpenClaw VMs — create, list, manage lifecycle, snapshot, monitor.
+    description: VMs — create, list, manage lifecycle, snapshot, monitor.
   - name: Snapshots
     description: List, restore, and delete VM disk snapshots stored at the cloud provider.
   - name: Volumes
     description: >-
       Block storage volumes attached to your VMs — create, resize, attach,
       detach.
-  - name: Connectors
-    description: >-
-      Messaging-channel credentials per OpenClaw install — Discord, Slack,
-      Telegram, etc.
-  - name: App installs
-    description: >-
-      App lifecycle on a specific instance — install from a catalog/org
-      template, configure, upgrade, rotate secrets, restart, uninstall.
-  - name: Project spending cap
-    description: >-
-      Per-project monthly spending cap — blocks new provisioning past the limit
-      (running resources are never killed, auto-recharge is unaffected).
-  - name: Org billing
-    description: >-
-      Org-level billing profile (company / tax / address) and spending controls
-      (soft + hard caps, per-member caps). Admin+ only on every verb.
-  - name: Project preferences
-    description: >-
-      Default settings applied to new instances in the project (default SSH key,
-      default backup retention, …).
-  - name: Org templates
-    description: >-
-      Per-organization customized app templates — clone a public catalog
-      template and tweak its manifest or compose for your org.
-  - name: Apps catalog
-    description: >-
-      Public catalog of installable app templates — list, browse, and pick a
-      version to install on your instances.
   - name: Analytics
     description: >-
       Per-project resource utilization overview — pool limits, per-instance
