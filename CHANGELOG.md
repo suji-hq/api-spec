@@ -1,3 +1,18 @@
+## 2026-05-19 — commit 17aa2da
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/logs
+-  added the media type `text/event-stream` for the response with the status `200`
+
+
+
+
+
+
+
 ## 2026-05-19 — commit 1fa0782
 # API Changelog 1.0.0 vs. 1.0.0
 

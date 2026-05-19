@@ -98,12 +98,20 @@ paths:
                   pattern: ^[a-zA-Z0-9 _-]+$
                   minLength: 1
                   maxLength: 60
+                  description: >-
+                    Display name for the instance. 1–60 chars, alphanumeric with
+                    spaces, underscores, or hyphens.
+                  example: prod-bot
                 region:
                   type: string
                   enum:
                     - eu-falkenstein
                     - eu-nuremberg
                     - eu-helsinki
+                  description: >-
+                    Suji region slug. Translated to the underlying
+                    cloud-provider region at the boundary.
+                  example: eu-falkenstein
                 vmSize:
                   type: string
                   enum:
@@ -111,10 +119,19 @@ paths:
                     - medium
                     - large
                     - xl
+                  description: >-
+                    Suji VM size slug — `small`, `medium`, `large`, or `xl`.
+                    Maps to provider-specific server types internally.
+                  example: small
                 sshPubkey:
                   type: string
                   pattern: >-
                     ^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))\s+[A-Za-z0-9+/=]+(?:\s+.+)?$
+                  description: >-
+                    Optional SSH public key (RSA / Ed25519 / ECDSA NIST
+                    P-256/384/521). When supplied, the key is installed on
+                    `root@` at first boot.
+                  example: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKey…
               required:
                 - name
                 - region
@@ -399,6 +416,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -956,6 +982,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (30 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -1177,6 +1212,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -1706,6 +1750,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (30 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -2057,6 +2110,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (30 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -2355,6 +2417,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (30 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -2966,6 +3037,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per minute per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -3341,6 +3421,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -3481,6 +3570,15 @@ paths:
                   - result
                   - errors
                   - messages
+            text/event-stream:
+              schema:
+                type: string
+                description: >-
+                  When `?follow=true`, the connection upgrades to Server-Sent
+                  Events. Each event is a UTF-8 frame: `event: log\ndata:
+                  <line>\n\n` for each new log line, and `event:
+                  heartbeat\ndata: <unix-ts>\n\n` every 5 seconds. The stream
+                  stays open until the client disconnects.
         '404':
           description: Instance not found
           content:
@@ -3585,6 +3683,15 @@ paths:
           description: >-
             Too many concurrent log followers for this instance (follow mode
             only)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -3883,6 +3990,11 @@ paths:
                     - hot
                     - cold
                   default: cold
+                  description: >-
+                    `cold` (default) briefly powers the VM off for a consistent
+                    on-disk snapshot. `hot` snapshots the live disk with no
+                    downtime but may capture in-flight writes.
+                  example: cold
       responses:
         '200':
           description: Snapshot queued
@@ -4201,6 +4313,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (5 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -4340,6 +4461,10 @@ paths:
                 snapshotId:
                   type: string
                   minLength: 1
+                  description: >-
+                    ID of the snapshot to restore. May belong to a different
+                    instance, as long as it is owned by the calling user.
+                  example: snap_ab12cd34ef56
               required:
                 - snapshotId
       responses:
@@ -4607,6 +4732,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -5291,6 +5425,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per minute per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -5528,6 +5671,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per minute per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -6343,6 +6495,15 @@ paths:
                   injection.
         '429':
           description: Rate limit exceeded (5 exports per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -7084,6 +7245,15 @@ paths:
                   injection.
         '429':
           description: Rate limit exceeded (5 exports per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -7992,12 +8162,25 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 100
+                  description: Human-readable name for the key (1–100 chars).
+                  example: macbook
                 publicKey:
                   type: string
                   minLength: 1
                   maxLength: 8192
+                  description: >-
+                    SSH public key in OpenSSH format. Supported algorithms:
+                    `ssh-ed25519`, `ssh-rsa`, `ecdsa-sha2-nistp256/384/521`.
+                    Private keys are rejected.
+                  example: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKey macbook@home
                 applyToAll:
                   type: boolean
+                  description: >-
+                    Default `true`. When true, the key is pushed to every
+                    running instance in the project and applied to every new
+                    instance at boot. When false, the key is stored but must be
+                    attached per-instance via the instance ssh-keys endpoints.
+                  example: true
               required:
                 - name
                 - publicKey
@@ -8218,6 +8401,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 mutations/minute/user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -8446,6 +8638,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 mutations/minute/user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -8762,6 +8963,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 mutations/minute/user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -8997,6 +9207,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 mutations/minute/user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -9431,6 +9650,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (5/hour/user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -9901,25 +10129,46 @@ paths:
                   pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
                   minLength: 3
                   maxLength: 63
+                  description: >-
+                    Volume name. 3–63 chars, lowercase alphanumeric with
+                    hyphens; must start and end with a letter or number.
+                  example: pgdata
                 sizeGb:
                   type: integer
                   minimum: 10
                   maximum: 10240
+                  description: >-
+                    Volume size in gibibytes. Min 10 GiB, max 10240 GiB. Billed
+                    hourly from creation.
+                  example: 50
                 region:
                   type: string
                   enum:
                     - eu-falkenstein
                     - eu-nuremberg
                     - eu-helsinki
+                  description: >-
+                    Suji region slug. Volumes can only be attached to instances
+                    in the same region.
+                  example: eu-falkenstein
                 autoMount:
                   type: boolean
                   default: true
+                  description: >-
+                    When true (default), the volume is formatted at create-time
+                    and mounted at `/mnt/vol-<name>` when attached to a running
+                    instance.
+                  example: true
                 filesystem:
                   type: string
                   enum:
                     - ext4
                     - xfs
                   default: ext4
+                  description: >-
+                    Filesystem to format the volume with when `autoMount` is
+                    true. Defaults to `ext4`.
+                  example: ext4
               required:
                 - name
                 - sizeGb
@@ -10310,6 +10559,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -11217,6 +11475,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -11691,6 +11958,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (10 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -11827,6 +12103,10 @@ paths:
                 instanceId:
                   type: string
                   minLength: 1
+                  description: >-
+                    ID of the instance to attach the volume to. Must belong to
+                    the same project and region as the volume.
+                  example: inst_ab12cd34ef56
               required:
                 - instanceId
       responses:
@@ -12167,6 +12447,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (20 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -12580,6 +12869,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (20 per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
@@ -13256,6 +13554,15 @@ paths:
                   - messages
         '429':
           description: Rate limited (5 creates per hour per user)
+          headers:
+            Retry-After:
+              description: >-
+                Seconds the caller should wait before retrying. Worst-case upper
+                bound — the limiter uses a sliding window, so a request may
+                succeed sooner.
+              schema:
+                type: integer
+                minimum: 0
           content:
             application/json:
               schema:
