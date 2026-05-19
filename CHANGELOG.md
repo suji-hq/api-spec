@@ -1,3 +1,36 @@
+## 2026-05-19 — commit 1fa0782
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/analytics/overview
+-  added the non-success response with the status `404`
+-  removed the non-success response with the status `403`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots
+-  added the non-success response with the status `400`
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/volumes
+-  added the non-success response with the status `400`
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/volumes/{id}/attach
+-  added the non-success response with the status `422`
+
+
+### GET /v1/orgs/{orgSlug}/quotas
+-  added the non-success response with the status `404`
+-  removed the non-success response with the status `403`
+
+
+
+
+
+
+
 ## 2026-05-19 — commit c1f8cd5
 # API Changelog 1.0.0 vs. 1.0.0
 

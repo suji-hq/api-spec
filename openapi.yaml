@@ -1777,9 +1777,9 @@ paths:
       description: >-
         Start a stopped, `error`, or suspended instance. Status flips to
         `starting` immediately and returns; the VM is booted asynchronously and
-        the status flips to `running` on completion. Suspended instances (paused
-        for non-payment) are gated on a positive credit balance — returns 402
-        with `PAYMENT_REQUIRED` when the balance is not positive.
+        the status flips to `running` on completion. Starting a suspended
+        instance requires a positive credit balance — returns 402 with
+        `PAYMENT_REQUIRED` when the balance is not positive.
       tags:
         - Instances
       responses:
@@ -3411,16 +3411,16 @@ paths:
       summary: Read or stream instance logs
       description: >-
         Return the most recent `?lines=` lines of log output for the instance
-        (default 100, max 10000). The response body is documented for the JSON
-        tail mode below.
+        (default 100, max 10000). The 200 response below describes the tail
+        (JSON) mode.
 
 
         When `?follow=true`, the response upgrades to a `text/event-stream`
         connection that emits `event: log` (one per new line) and `event:
         heartbeat` every 5 seconds — useful for live tailing in a browser. The
         SSE wire shape is not modelled in this spec; subscribers cap at 5
-        concurrent followers per instance (extra requests return
-        `TOO_MANY_FOLLOWERS`).
+        concurrent followers per instance (extra requests return 429 with error
+        code `TOO_MANY_FOLLOWERS`).
       tags:
         - Instances
       responses:
@@ -3857,17 +3857,17 @@ paths:
       operationId: createInstanceSnapshot
       summary: Create a snapshot of an instance
       description: >-
-        Queue a snapshot of the instance's disk via the cloud provider. Defaults
-        to `mode: "cold"` (briefly powers the VM off for a consistent snapshot);
-        `mode: "hot"` snapshots the live disk with no downtime. Returns
-        immediately with `status: "uploading"` and `progress: 0`; clients poll
-        `GET /:id/snapshots` to watch progress. If the per-plan or per-user
-        quota is at its limit, the oldest manual snapshot is auto-rotated before
-        the new one starts.
+        Queue a snapshot of the instance's disk. Defaults to `mode: "cold"`
+        (briefly powers the VM off for a consistent snapshot); `mode: "hot"`
+        snapshots the live disk with no downtime. Returns immediately with
+        `status: "uploading"` and `progress: 0`; clients poll `GET
+        /:id/snapshots` to watch progress. If the snapshot quota is at its
+        limit, the oldest manual snapshot is auto-rotated before the new one
+        starts.
 
 
-        Gated on the org-level spending hard cap. Note the path is singular
-        (`/snapshot`) — the matching list endpoint is plural (`/snapshots`).
+        Gated on the spending hard cap. Note the path is singular (`/snapshot`)
+        — the matching list endpoint is plural (`/snapshots`).
       tags:
         - Instances
       requestBody:
@@ -4327,8 +4327,7 @@ paths:
         different instance, as long as both belong to the calling user. The
         instance status flips to `restoring` immediately; the disk is
         re-provisioned asynchronously and the status flips back to `running` (or
-        `error`) on completion. Gated on the org-level spending hard cap
-        (restore re-provisions storage and incurs billable egress).
+        `error`) on completion. Gated on the spending hard cap.
       tags:
         - Instances
       requestBody:
@@ -5063,9 +5062,9 @@ paths:
       summary: Attach an SSH key to an instance
       description: >-
         Attach an existing project-level SSH key (owned by the calling user) to
-        this instance. If the instance is running, the VM's `authorized_keys`
-        file is rewritten in place; if that push fails, the attach still
-        succeeds and the key takes effect on the next instance boot.
+        this instance. If the instance is running, the key is pushed live
+        (best-effort); otherwise it takes effect on the next boot. The
+        attachment is recorded either way.
       tags:
         - Instances
       requestBody:
@@ -5820,8 +5819,8 @@ paths:
                   - result
                   - errors
                   - messages
-        '403':
-          description: Not a member of this organization
+        '404':
+          description: Project not found or not accessible to the caller
           content:
             application/json:
               schema:
@@ -7529,6 +7528,56 @@ paths:
                   - result
                   - errors
                   - messages
+        '400':
+          description: No project context resolved for the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
       parameters:
         - schema:
             type: string
@@ -7928,8 +7977,8 @@ paths:
       summary: Add an SSH key
       description: >-
         Add an SSH public key to the current project. Keys with `applyToAll`
-        (default true) are pushed to every running VM in the project and applied
-        to every new VM at boot.
+        (default true) are pushed to every running instance in the project and
+        applied to every new instance at boot.
       tags:
         - SSH keys
       requestBody:
@@ -9281,7 +9330,7 @@ paths:
                   - errors
                   - messages
         '400':
-          description: Invalid request body
+          description: Invalid request body, or no project is selected for the caller
           content:
             application/json:
               schema:
@@ -9971,6 +10020,56 @@ paths:
                       - createdAt
                       - region
                       - regionLabel
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '400':
+          description: No project context resolved for the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
                   errors:
                     type: array
                     items:
@@ -11865,7 +11964,7 @@ paths:
                   - errors
                   - messages
         '403':
-          description: Insufficient scope or per-instance volume quota exceeded
+          description: Insufficient scope
           content:
             application/json:
               schema:
@@ -11968,6 +12067,56 @@ paths:
           description: >-
             Volume already attached, or instance/volume region mismatch, or
             instance in wrong state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '422':
+          description: Per-instance volume quota exceeded
           content:
             application/json:
               schema:
@@ -12653,8 +12802,8 @@ paths:
                   - result
                   - errors
                   - messages
-        '403':
-          description: Not a member of this organization
+        '404':
+          description: Organization not found or not accessible to the caller
           content:
             application/json:
               schema:
