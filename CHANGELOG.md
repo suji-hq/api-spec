@@ -1,3 +1,62 @@
+## 2026-05-30 — commit 713740c
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/audit-log
+- :warning: added the new `account_quotas` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/export
+- :warning: added the new `account_quotas` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/{id}
+- :warning: added the new `account_quotas` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/me
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/analytics/overview
+- :warning: api path removed without deprecation
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log
+- :warning: added the new `account_quotas` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/export
+- :warning: added the new `account_quotas` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/{id}
+- :warning: added the new `account_quotas` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `app_template` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `impersonation_tokens` enum value to the `result/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots
+- :warning: removed the required property `result/snapshots/items/version` from the response with the `200` status
+
+
+
+
+
+
+
 ## 2026-05-19 — commit 17aa2da
 # API Changelog 1.0.0 vs. 1.0.0
 

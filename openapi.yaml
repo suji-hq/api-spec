@@ -5749,289 +5749,6 @@ paths:
           in: path
           name: keyId
           required: true
-  /v1/orgs/{orgSlug}/projects/{projectSlug}/analytics/overview:
-    get:
-      operationId: getAnalyticsOverview
-      summary: Get project analytics overview
-      description: >-
-        Per-project resource utilization summary. Returns:
-
-
-        - **`pool`** — caps (CPU millicores, memory bytes, storage bytes,
-        instance count) and the current allocation summed across
-        non-deprovisioning instances.
-
-        - **`instances[]`** — per-instance row with the latest live
-        CPU/memory/storage usage (values are nullable when no recent sample is
-        available).
-
-        - **`trends`** — 7-day trend series (best-effort; empty arrays if the
-        metrics backend is unreachable). Each point is `{ t, v }` where `t` is
-        unix seconds and `v` is **millicores for `cpu`, MiB for `memory`, GiB
-        for `storage`**.
-      tags:
-        - Analytics
-      responses:
-        '200':
-          description: Project analytics overview
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    const: true
-                  result:
-                    type: object
-                    properties:
-                      pool:
-                        type: object
-                        properties:
-                          cpu:
-                            type: object
-                            properties:
-                              limitMillicores:
-                                type: number
-                              usedMillicores:
-                                type: number
-                            required:
-                              - limitMillicores
-                              - usedMillicores
-                          memory:
-                            type: object
-                            properties:
-                              limitBytes:
-                                type: number
-                              usedBytes:
-                                type: number
-                            required:
-                              - limitBytes
-                              - usedBytes
-                          storage:
-                            type: object
-                            properties:
-                              limitBytes:
-                                type: number
-                              usedBytes:
-                                type: number
-                            required:
-                              - limitBytes
-                              - usedBytes
-                          instances:
-                            type: object
-                            properties:
-                              limit:
-                                type: number
-                              used:
-                                type: number
-                            required:
-                              - limit
-                              - used
-                        required:
-                          - cpu
-                          - memory
-                          - storage
-                          - instances
-                      instances:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            subdomain:
-                              type:
-                                - string
-                                - 'null'
-                            status:
-                              type: string
-                              enum:
-                                - provisioning
-                                - running
-                                - stopping
-                                - stopped
-                                - starting
-                                - restarting
-                                - suspended
-                                - error
-                                - deprovisioning
-                                - rebuilding
-                                - restoring
-                            cpuPercent:
-                              type:
-                                - number
-                                - 'null'
-                            memoryPercent:
-                              type:
-                                - number
-                                - 'null'
-                            storageUsedBytes:
-                              type:
-                                - number
-                                - 'null'
-                            cpuMillicores:
-                              type: number
-                            memoryGi:
-                              type: number
-                            storageGi:
-                              type: number
-                          required:
-                            - id
-                            - subdomain
-                            - status
-                            - cpuPercent
-                            - memoryPercent
-                            - storageUsedBytes
-                            - cpuMillicores
-                            - memoryGi
-                            - storageGi
-                      trends:
-                        type: object
-                        properties:
-                          cpu:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                t:
-                                  type: number
-                                v:
-                                  type: number
-                              required:
-                                - t
-                                - v
-                          memory:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                t:
-                                  type: number
-                                v:
-                                  type: number
-                              required:
-                                - t
-                                - v
-                          storage:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                t:
-                                  type: number
-                                v:
-                                  type: number
-                              required:
-                                - t
-                                - v
-                        required:
-                          - cpu
-                          - memory
-                          - storage
-                    required:
-                      - pool
-                      - instances
-                      - trends
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                        documentation_url:
-                          type: string
-                        source:
-                          type: object
-                          properties:
-                            pointer:
-                              type: string
-                          required:
-                            - pointer
-                      required:
-                        - code
-                        - message
-                  messages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                      required:
-                        - code
-                        - message
-                required:
-                  - success
-                  - result
-                  - errors
-                  - messages
-        '404':
-          description: Project not found or not accessible to the caller
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    const: false
-                  result:
-                    type: 'null'
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                        documentation_url:
-                          type: string
-                        source:
-                          type: object
-                          properties:
-                            pointer:
-                              type: string
-                          required:
-                            - pointer
-                      required:
-                        - code
-                        - message
-                  messages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                      required:
-                        - code
-                        - message
-                required:
-                  - success
-                  - result
-                  - errors
-                  - messages
-      parameters:
-        - schema:
-            type: string
-          in: path
-          name: orgSlug
-          required: true
-        - schema:
-            type: string
-          in: path
-          name: projectSlug
-          required: true
   /v1/orgs/{orgSlug}/audit-log:
     get:
       operationId: listOrgAuditEvents
@@ -6097,7 +5814,10 @@ paths:
                             - passkey
                             - support_ticket
                             - app_install
+                            - app_template
                             - org_template
+                            - account_quotas
+                            - impersonation_tokens
                         resourceId:
                           type:
                             - string
@@ -6395,7 +6115,10 @@ paths:
                             - passkey
                             - support_ticket
                             - app_install
+                            - app_template
                             - org_template
+                            - account_quotas
+                            - impersonation_tokens
                         resourceId:
                           type:
                             - string
@@ -6618,7 +6341,10 @@ paths:
                           - passkey
                           - support_ticket
                           - app_install
+                          - app_template
                           - org_template
+                          - account_quotas
+                          - impersonation_tokens
                       resourceId:
                         type:
                           - string
@@ -6837,7 +6563,10 @@ paths:
                             - passkey
                             - support_ticket
                             - app_install
+                            - app_template
                             - org_template
+                            - account_quotas
+                            - impersonation_tokens
                         resourceId:
                           type:
                             - string
@@ -7145,7 +6874,10 @@ paths:
                             - passkey
                             - support_ticket
                             - app_install
+                            - app_template
                             - org_template
+                            - account_quotas
+                            - impersonation_tokens
                         resourceId:
                           type:
                             - string
@@ -7373,7 +7105,10 @@ paths:
                           - passkey
                           - support_ticket
                           - app_install
+                          - app_template
                           - org_template
+                          - account_quotas
+                          - impersonation_tokens
                       resourceId:
                         type:
                           - string
@@ -7579,10 +7314,6 @@ paths:
                               type:
                                 - string
                                 - 'null'
-                            version:
-                              type:
-                                - string
-                                - 'null'
                             sizeBytes:
                               type: number
                             s3Key:
@@ -7633,7 +7364,6 @@ paths:
                             - originalInstanceId
                             - userId
                             - instanceSubdomain
-                            - version
                             - sizeBytes
                             - s3Key
                             - sha256
@@ -10156,7 +9886,7 @@ paths:
                   default: true
                   description: >-
                     When true (default), the volume is formatted at create-time
-                    and mounted at `/mnt/vol-<name>` when attached to a running
+                    and mounted at `/mnt/<name>` when attached to a running
                     instance.
                   example: true
                 filesystem:
@@ -12088,8 +11818,8 @@ paths:
       description: >-
         Attach a detached volume to an instance in the same project and region.
         The instance must be running or stopped. If the volume has `autoMount`
-        and the instance is running, the volume is mounted at `/mnt/vol-<name>`;
-        if the mount step fails, the volume is still attached but `errorMessage`
+        and the instance is running, the volume is mounted at `/mnt/<name>`; if
+        the mount step fails, the volume is still attached but `errorMessage`
         records the failure.
       tags:
         - Volumes
@@ -14134,113 +13864,6 @@ paths:
                     const: false
                   result:
                     type: 'null'
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                        documentation_url:
-                          type: string
-                        source:
-                          type: object
-                          properties:
-                            pointer:
-                              type: string
-                          required:
-                            - pointer
-                      required:
-                        - code
-                        - message
-                  messages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        message:
-                          type: string
-                      required:
-                        - code
-                        - message
-                required:
-                  - success
-                  - result
-                  - errors
-                  - messages
-      parameters:
-        - schema:
-            type: string
-          in: path
-          name: orgSlug
-          required: true
-  /v1/orgs/{orgSlug}/me:
-    get:
-      operationId: getOrgMembership
-      summary: Get your role and project access in this org
-      description: >-
-        Return the caller's role inside `:orgSlug` and the list of projects they
-        can access — either through explicit project membership or through org
-        owner/admin inheritance.
-      tags:
-        - Organizations
-      responses:
-        '200':
-          description: Caller membership view of this org
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    const: true
-                  result:
-                    type: object
-                    properties:
-                      orgId:
-                        type: string
-                      orgRole:
-                        type: string
-                        enum:
-                          - owner
-                          - admin
-                          - member
-                      accessibleProjects:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            projectId:
-                              type: string
-                            projectSlug:
-                              type: string
-                            orgId:
-                              type: string
-                            role:
-                              type: string
-                              enum:
-                                - owner
-                                - member
-                            source:
-                              type: string
-                              enum:
-                                - explicit
-                                - org-inherited
-                          required:
-                            - projectId
-                            - projectSlug
-                            - orgId
-                            - role
-                            - source
-                    required:
-                      - orgId
-                      - orgRole
-                      - accessibleProjects
                   errors:
                     type: array
                     items:
