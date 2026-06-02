@@ -1,3 +1,24 @@
+## 2026-06-02 — commit a9c39e4
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/firewall
+-  added the optional property `result/rules/items/label` to the response with the `200` status
+-  added the optional property `result/rules/items/managed` to the response with the `200` status
+
+
+### PUT /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/firewall
+-  added the new optional request property `rules/items/label`
+-  added the new optional request property `rules/items/managed`
+
+
+
+
+
+
+
 ## 2026-05-30 — commit 713740c
 # API Changelog 1.0.0 vs. 1.0.0
 

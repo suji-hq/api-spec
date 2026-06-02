@@ -2552,6 +2552,17 @@ paths:
                               type: string
                               maxLength: 255
                               default: ''
+                            managed:
+                              type:
+                                - string
+                                - 'null'
+                              enum:
+                                - app
+                                - platform
+                                - null
+                            label:
+                              type: string
+                              maxLength: 255
                           required:
                             - direction
                             - protocol
@@ -2770,6 +2781,17 @@ paths:
                         type: string
                         maxLength: 255
                         default: ''
+                      managed:
+                        type:
+                          - string
+                          - 'null'
+                        enum:
+                          - app
+                          - platform
+                          - null
+                      label:
+                        type: string
+                        maxLength: 255
                     required:
                       - direction
                       - protocol
