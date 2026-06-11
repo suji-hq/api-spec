@@ -236,7 +236,9 @@ paths:
                   - errors
                   - messages
         '402':
-          description: Spending hard cap exceeded
+          description: >-
+            Spending hard cap exceeded, or credit balance too low to run the
+            instance
           content:
             application/json:
               schema:
