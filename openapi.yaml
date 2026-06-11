@@ -123,6 +123,19 @@ paths:
                     Suji VM size slug — `small`, `medium`, `large`, or `xl`.
                     Maps to provider-specific server types internally.
                   example: small
+                image:
+                  type: string
+                  enum:
+                    - ubuntu-24.04
+                    - ubuntu-22.04
+                    - debian-13
+                    - debian-12
+                  default: ubuntu-24.04
+                  description: >-
+                    OS image slug for the new VM. Defaults to `ubuntu-24.04`
+                    when omitted. The list of available images is curated — see
+                    the enum values.
+                  example: ubuntu-24.04
                 sshPubkey:
                   type: string
                   pattern: >-
@@ -170,12 +183,20 @@ paths:
                           - medium
                           - large
                           - xl
+                      image:
+                        type: string
+                        enum:
+                          - ubuntu-24.04
+                          - ubuntu-22.04
+                          - debian-13
+                          - debian-12
                     required:
                       - id
                       - status
                       - name
                       - region
                       - vmSize
+                      - image
                   errors:
                     type: array
                     items:
@@ -611,6 +632,8 @@ paths:
                             - large
                             - xl
                             - null
+                        image:
+                          type: string
                         cpuMillicores:
                           type: integer
                         memoryGi:
@@ -654,6 +677,7 @@ paths:
                         - region
                         - regionLabel
                         - vmSize
+                        - image
                         - cpuMillicores
                         - memoryGi
                         - storageGi
@@ -1357,6 +1381,8 @@ paths:
                           - large
                           - xl
                           - null
+                      image:
+                        type: string
                       cpuMillicores:
                         type: integer
                       memoryGi:
@@ -1400,6 +1426,7 @@ paths:
                       - region
                       - regionLabel
                       - vmSize
+                      - image
                       - cpuMillicores
                       - memoryGi
                       - storageGi
@@ -2557,10 +2584,12 @@ paths:
                                 - string
                                 - 'null'
                               enum:
-                                - app
                                 - platform
                                 - null
                             label:
+                              type: string
+                              maxLength: 255
+                            tag:
                               type: string
                               maxLength: 255
                           required:
@@ -2786,10 +2815,12 @@ paths:
                           - string
                           - 'null'
                         enum:
-                          - app
                           - platform
                           - null
                       label:
+                        type: string
+                        maxLength: 255
+                      tag:
                         type: string
                         maxLength: 255
                     required:

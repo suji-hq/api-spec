@@ -1,3 +1,37 @@
+## 2026-06-11 — commit 6718ab9
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the required property `result/items/image` to the response with the `200` status
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the new optional request property `image`
+-  added the required property `result/image` to the response with the `201` status
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+-  added the required property `result/image` to the response with the `200` status
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/firewall
+-  added the optional property `result/rules/items/tag` to the response with the `200` status
+-  removed the `app` enum value from the `result/rules/items/managed` response property for the response status `200`
+
+
+### PUT /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/firewall
+- :warning: removed the enum value `app` of the request property `rules/items/managed`
+-  added the new optional request property `rules/items/tag`
+
+
+
+
+
+
+
 ## 2026-06-02 — commit a9c39e4
 # API Changelog 1.0.0 vs. 1.0.0
 
