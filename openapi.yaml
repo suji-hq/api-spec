@@ -7550,10 +7550,10 @@ paths:
       summary: Delete a snapshot
       description: >-
         Permanently delete a snapshot. Works for both attached and orphan
-        (source-instance-deleted) snapshots. The S3 object and the provider
-        snapshot are removed best-effort — the database row is always cleared
-        regardless. Rejects with `SNAPSHOT_IN_PROGRESS` while the snapshot is
-        still uploading.
+        (source-instance-deleted) snapshots. The provider snapshot is removed
+        first; if that delete fails the database row is kept so the operation
+        can be retried safely (no orphaned billable image). Rejects with
+        `SNAPSHOT_IN_PROGRESS` while the snapshot is still uploading.
       tags:
         - Snapshots
       responses:
