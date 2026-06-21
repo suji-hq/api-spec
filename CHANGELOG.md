@@ -1,3 +1,38 @@
+## 2026-06-21 — commit e3eab1c
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/audit-log
+- :warning: added the new `referral_code` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/export
+- :warning: added the new `referral_code` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/{id}
+- :warning: added the new `referral_code` enum value to the `result/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log
+- :warning: added the new `referral_code` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/export
+- :warning: added the new `referral_code` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/{id}
+- :warning: added the new `referral_code` enum value to the `result/resourceType` response property for the response status `200`
+
+
+
+
+
+
+
 ## 2026-06-14 — commit 15b2b53
 # API Changelog 1.0.0 vs. 1.0.0
 

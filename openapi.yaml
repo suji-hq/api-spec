@@ -5873,6 +5873,7 @@ paths:
                             - org_template
                             - account_quotas
                             - impersonation_tokens
+                            - referral_code
                         resourceId:
                           type:
                             - string
@@ -6174,6 +6175,7 @@ paths:
                             - org_template
                             - account_quotas
                             - impersonation_tokens
+                            - referral_code
                         resourceId:
                           type:
                             - string
@@ -6400,6 +6402,7 @@ paths:
                           - org_template
                           - account_quotas
                           - impersonation_tokens
+                          - referral_code
                       resourceId:
                         type:
                           - string
@@ -6622,6 +6625,7 @@ paths:
                             - org_template
                             - account_quotas
                             - impersonation_tokens
+                            - referral_code
                         resourceId:
                           type:
                             - string
@@ -6933,6 +6937,7 @@ paths:
                             - org_template
                             - account_quotas
                             - impersonation_tokens
+                            - referral_code
                         resourceId:
                           type:
                             - string
@@ -7164,6 +7169,7 @@ paths:
                           - org_template
                           - account_quotas
                           - impersonation_tokens
+                          - referral_code
                       resourceId:
                         type:
                           - string
