@@ -159,6 +159,23 @@ paths:
                   example:
                     - prod
                     - team:ops
+                snapshotSchedule:
+                  type: string
+                  enum:
+                    - daily
+                    - weekly
+                  description: >-
+                    Enable automatic scheduled snapshots at this cadence
+                    (`daily` or `weekly`). Omit for none.
+                  example: daily
+                snapshotRetention:
+                  type: integer
+                  minimum: 1
+                  maximum: 30
+                  description: >-
+                    How many scheduled snapshots to keep (1-30). Defaults to 7
+                    when a schedule is set.
+                  example: 7
               required:
                 - name
                 - region
@@ -666,6 +683,16 @@ paths:
                           type: array
                           items:
                             type: string
+                        snapshotSchedule:
+                          type:
+                            - string
+                            - 'null'
+                          enum:
+                            - daily
+                            - weekly
+                            - null
+                        snapshotRetention:
+                          type: integer
                         projectId:
                           type: string
                         config:
@@ -704,6 +731,8 @@ paths:
                         - publicIp
                         - hasTunnel
                         - tags
+                        - snapshotSchedule
+                        - snapshotRetention
                         - projectId
                         - config
                         - provisionedAt
@@ -819,6 +848,18 @@ paths:
                     minLength: 1
                     maxLength: 50
                   maxItems: 10
+                snapshotSchedule:
+                  type:
+                    - string
+                    - 'null'
+                  enum:
+                    - daily
+                    - weekly
+                    - null
+                snapshotRetention:
+                  type: integer
+                  minimum: 1
+                  maximum: 30
       responses:
         '200':
           description: Renamed instance
@@ -1428,6 +1469,16 @@ paths:
                         type: array
                         items:
                           type: string
+                      snapshotSchedule:
+                        type:
+                          - string
+                          - 'null'
+                        enum:
+                          - daily
+                          - weekly
+                          - null
+                      snapshotRetention:
+                        type: integer
                       projectId:
                         type: string
                       config:
@@ -1466,6 +1517,8 @@ paths:
                       - publicIp
                       - hasTunnel
                       - tags
+                      - snapshotSchedule
+                      - snapshotRetention
                       - projectId
                       - config
                       - provisionedAt

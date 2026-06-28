@@ -1,3 +1,34 @@
+## 2026-06-28 — commit 3bb8429
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the required property `result/items/snapshotRetention` to the response with the `200` status
+-  added the required property `result/items/snapshotSchedule` to the response with the `200` status
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the new optional request property `snapshotRetention`
+-  added the new optional request property `snapshotSchedule`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+-  added the required property `result/snapshotRetention` to the response with the `200` status
+-  added the required property `result/snapshotSchedule` to the response with the `200` status
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+-  added the new optional request property `snapshotRetention`
+-  added the new optional request property `snapshotSchedule`
+
+
+
+
+
+
+
 ## 2026-06-28 — commit 76492e9
 # API Changelog 1.0.0 vs. 1.0.0
 
