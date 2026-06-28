@@ -1,3 +1,30 @@
+## 2026-06-28 — commit 76492e9
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the required property `result/items/tags` to the response with the `200` status
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+-  added the new optional request property `tags`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+-  added the required property `result/tags` to the response with the `200` status
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+-  added the new optional request property `tags`
+
+
+
+
+
+
+
 ## 2026-06-21 — commit e3eab1c
 # API Changelog 1.0.0 vs. 1.0.0
 

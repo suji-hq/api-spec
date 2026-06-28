@@ -145,6 +145,20 @@ paths:
                     P-256/384/521). When supplied, the key is installed on
                     `root@` at first boot.
                   example: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKey…
+                tags:
+                  type: array
+                  items:
+                    type: string
+                    pattern: ^[a-zA-Z0-9:_-]+$
+                    minLength: 1
+                    maxLength: 50
+                  maxItems: 10
+                  description: >-
+                    Organisational labels for the instance (≤10,
+                    letters/numbers/:/-/_).
+                  example:
+                    - prod
+                    - team:ops
               required:
                 - name
                 - region
@@ -648,6 +662,10 @@ paths:
                             - 'null'
                         hasTunnel:
                           type: boolean
+                        tags:
+                          type: array
+                          items:
+                            type: string
                         projectId:
                           type: string
                         config:
@@ -685,6 +703,7 @@ paths:
                         - storageGi
                         - publicIp
                         - hasTunnel
+                        - tags
                         - projectId
                         - config
                         - provisionedAt
@@ -792,6 +811,14 @@ paths:
                   pattern: ^[a-zA-Z0-9 _-]+$
                   minLength: 1
                   maxLength: 60
+                tags:
+                  type: array
+                  items:
+                    type: string
+                    pattern: ^[a-zA-Z0-9:_-]+$
+                    minLength: 1
+                    maxLength: 50
+                  maxItems: 10
       responses:
         '200':
           description: Renamed instance
@@ -1397,6 +1424,10 @@ paths:
                           - 'null'
                       hasTunnel:
                         type: boolean
+                      tags:
+                        type: array
+                        items:
+                          type: string
                       projectId:
                         type: string
                       config:
@@ -1434,6 +1465,7 @@ paths:
                       - storageGi
                       - publicIp
                       - hasTunnel
+                      - tags
                       - projectId
                       - config
                       - provisionedAt
