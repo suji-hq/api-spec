@@ -171,7 +171,7 @@ paths:
                 snapshotRetention:
                   type: integer
                   minimum: 1
-                  maximum: 30
+                  maximum: 10
                   description: >-
                     How many scheduled snapshots to keep (1-30). Defaults to 7
                     when a schedule is set.
@@ -859,7 +859,7 @@ paths:
                 snapshotRetention:
                   type: integer
                   minimum: 1
-                  maximum: 30
+                  maximum: 10
       responses:
         '200':
           description: Renamed instance
@@ -5889,6 +5889,420 @@ paths:
           in: path
           name: keyId
           required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/enable:
+    post:
+      operationId: enableInstanceBackups
+      summary: Enable managed daily backups (+20%)
+      description: >-
+        Turns on the cloud provider's native daily backups (7 kept, rotating).
+        Adds a 20% backup surcharge to the instance's metered cost. Backups are
+        deleted if the instance is deleted. The first backup appears within
+        ~24h.
+      tags:
+        - Instances
+      responses:
+        '200':
+          description: Backups enabled
+        '404':
+          description: Instance not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: Invalid state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/disable:
+    post:
+      operationId: disableInstanceBackups
+      summary: Disable managed daily backups
+      description: >-
+        Turns off native backups and stops the 20% surcharge. The provider
+        deletes the existing backups for this instance.
+      tags:
+        - Instances
+      responses:
+        '200':
+          description: Backups disabled
+        '404':
+          description: Instance not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups:
+    get:
+      operationId: listInstanceBackups
+      summary: List the instance's managed backups
+      description: >-
+        Lists the provider-managed daily backups for this instance (newest
+        first). These are separate from snapshots.
+      tags:
+        - Instances
+      responses:
+        '200':
+          description: Backups
+        '404':
+          description: Instance not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
+  /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/restore:
+    post:
+      operationId: restoreInstanceBackup
+      summary: Restore the instance from a managed backup
+      description: >-
+        Rebuilds the instance from one of its managed backups. DESTRUCTIVE:
+        everything after the backup is lost.
+      tags:
+        - Instances
+      responses:
+        '200':
+          description: Restore queued
+        '404':
+          description: Instance or backup not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '409':
+          description: Invalid state / another operation in progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: orgSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: projectSlug
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: id
+          required: true
   /v1/orgs/{orgSlug}/audit-log:
     get:
       operationId: listOrgAuditEvents
@@ -7486,6 +7900,7 @@ paths:
                                 - manual
                                 - migration
                                 - termination
+                                - scheduled
                             progress:
                               type: number
                             errorMessage:

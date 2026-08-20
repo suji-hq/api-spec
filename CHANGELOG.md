@@ -1,3 +1,42 @@
+## 2026-08-20 — commit 35118f9
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+- :warning: the `snapshotRetention` request property's max was decreased to `10.00`
+
+
+### PATCH /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}
+- :warning: the `snapshotRetention` request property's max was decreased to `10.00`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/disable
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/enable
+-  endpoint added
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/backups/restore
+-  endpoint added
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/snapshots
+- :warning: added the new `scheduled` enum value to the `result/snapshots/items/type` response property for the response status `200`
+
+
+
+
+
+
+
 ## 2026-06-28 — commit 3bb8429
 # API Changelog 1.0.0 vs. 1.0.0
 
