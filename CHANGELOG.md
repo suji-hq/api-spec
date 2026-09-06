@@ -1,3 +1,70 @@
+## 2026-09-06 — commit fcbcf04
+# API Changelog 1.0.0 vs. 1.0.0
+
+
+## API Changes
+
+### GET /v1/orgs/{orgSlug}/audit-log
+- :warning: added the new `admin_user` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/export
+- :warning: added the new `admin_user` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/audit-log/{id}
+- :warning: added the new `admin_user` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log
+- :warning: added the new `admin_user` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/export
+- :warning: added the new `admin_user` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/items/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/items/resourceType` response property for the response status `200`
+
+
+### GET /v1/orgs/{orgSlug}/projects/{projectSlug}/audit-log/{id}
+- :warning: added the new `admin_user` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `beta_application` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `incident` enum value to the `result/resourceType` response property for the response status `200`
+- :warning: added the new `job` enum value to the `result/resourceType` response property for the response status `200`
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances
+- :warning: the `sshPubkey` request property's minLength was increased from `0` to `1`
+- :warning: the `sshPubkey` request property's maxLength was set to `8192`
+- :warning: changed the pattern of the request property `sshPubkey` from `^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))\s+[A-Za-z0-9+/=]+(?:\s+.+)?$` to `^(?:ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))[ \t]+[A-Za-z0-9+/]{16,}={0,3}(?:[ \t]+[!-~][ -~]{0,254})?(?![\s\S])`
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/instances/{id}/resize
+-  added the non-success response with the status `402`
+
+
+### POST /v1/orgs/{orgSlug}/projects/{projectSlug}/ssh-keys
+- :warning: added the pattern `^(?:ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))[ \t]+[A-Za-z0-9+/]{16,}={0,3}(?:[ \t]+[!-~][ -~]{0,254})?(?![\s\S])` to the request property `publicKey`
+
+
+
+
+
+
+
 ## 2026-08-20 — commit 35118f9
 # API Changelog 1.0.0 vs. 1.0.0
 

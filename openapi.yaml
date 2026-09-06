@@ -139,7 +139,11 @@ paths:
                 sshPubkey:
                   type: string
                   pattern: >-
-                    ^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))\s+[A-Za-z0-9+/=]+(?:\s+.+)?$
+                    ^(?:ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))[
+                    \t]+[A-Za-z0-9+/]{16,}={0,3}(?:[ \t]+[!-~][
+                    -~]{0,254})?(?![\s\S])
+                  minLength: 1
+                  maxLength: 8192
                   description: >-
                     Optional SSH public key (RSA / Ed25519 / ECDSA NIST
                     P-256/384/521). When supplied, the key is installed on
@@ -3310,8 +3314,10 @@ paths:
         `error`, or `suspended` the change is also applied to the underlying VM
         asynchronously. `upgradeDisk` (default true) controls whether the disk
         is grown immediately as part of the same operation. Storage can only
-        grow — shrink requests return 409 `INVALID_RESIZE`. A no-op resize (same
-        values) returns 200 with the current instance snapshot.
+        grow. Shrink requests return 409 `INVALID_RESIZE`. A no-op resize (same
+        values) returns 200 with the current instance snapshot. Moving to a
+        larger plan is checked against spending hard caps and the account
+        balance, the same way instance creation is.
       tags:
         - Instances
       requestBody:
@@ -3367,6 +3373,59 @@ paths:
                       - cpuMillicores
                       - memoryGi
                       - storageGi
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                        documentation_url:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                          required:
+                            - pointer
+                      required:
+                        - code
+                        - message
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        message:
+                          type: string
+                      required:
+                        - code
+                        - message
+                required:
+                  - success
+                  - result
+                  - errors
+                  - messages
+        '402':
+          description: >-
+            Moving to a larger plan is blocked by a spending hard cap
+            (`HARD_CAP_EXCEEDED`) or by an insufficient balance
+            (`INSUFFICIENT_CREDITS`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: false
+                  result:
+                    type: 'null'
                   errors:
                     type: array
                     items:
@@ -6373,6 +6432,10 @@ paths:
                             - account_quotas
                             - impersonation_tokens
                             - referral_code
+                            - admin_user
+                            - incident
+                            - job
+                            - beta_application
                         resourceId:
                           type:
                             - string
@@ -6675,6 +6738,10 @@ paths:
                             - account_quotas
                             - impersonation_tokens
                             - referral_code
+                            - admin_user
+                            - incident
+                            - job
+                            - beta_application
                         resourceId:
                           type:
                             - string
@@ -6902,6 +6969,10 @@ paths:
                           - account_quotas
                           - impersonation_tokens
                           - referral_code
+                          - admin_user
+                          - incident
+                          - job
+                          - beta_application
                       resourceId:
                         type:
                           - string
@@ -7125,6 +7196,10 @@ paths:
                             - account_quotas
                             - impersonation_tokens
                             - referral_code
+                            - admin_user
+                            - incident
+                            - job
+                            - beta_application
                         resourceId:
                           type:
                             - string
@@ -7437,6 +7512,10 @@ paths:
                             - account_quotas
                             - impersonation_tokens
                             - referral_code
+                            - admin_user
+                            - incident
+                            - job
+                            - beta_application
                         resourceId:
                           type:
                             - string
@@ -7669,6 +7748,10 @@ paths:
                           - account_quotas
                           - impersonation_tokens
                           - referral_code
+                          - admin_user
+                          - incident
+                          - job
+                          - beta_application
                       resourceId:
                         type:
                           - string
@@ -8457,6 +8540,10 @@ paths:
                   example: macbook
                 publicKey:
                   type: string
+                  pattern: >-
+                    ^(?:ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(?:256|384|521))[
+                    \t]+[A-Za-z0-9+/]{16,}={0,3}(?:[ \t]+[!-~][
+                    -~]{0,254})?(?![\s\S])
                   minLength: 1
                   maxLength: 8192
                   description: >-
@@ -13694,7 +13781,10 @@ paths:
                   - errors
                   - messages
         '403':
-          description: Email must be verified before creating additional organizations
+          description: >-
+            Email must be verified before creating additional organizations, or
+            the request was authenticated with a personal access token
+            (interactive session required)
           content:
             application/json:
               schema:
